@@ -5018,25 +5018,10 @@ function displayActiveLatihan() {
                         onclickMurid = `openFloatingAudioPlayer('${l.audioUrl}')`;
                     }
 
-                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== "" 
-                        ? `<button onclick="event.stopPropagation(); ${onclickMurid}" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
-                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
-                        
-                    let onclickGuru = '';
-                    if (l.audioGuru && l.audioGuru.startsWith('http')) {
-                        let safeUrlGuru = l.audioGuru;
-                        if(safeUrlGuru.includes('uc?export=download&id=')) {
-                            let dId = safeUrlGuru.split('id=')[1];
-                            safeUrlGuru = `https://drive.google.com/file/d/${dId}/view`;
-                        }
-                        onclickGuru = `window.open('${safeUrlGuru}', '_blank')`;
-                    } else {
-                        onclickGuru = `openFloatingAudioPlayer('${l.audioGuru}')`;
-                    }
-
-                    const audioGuruHTML = l.audioGuru && l.audioGuru.trim() !== "" 
-                        ? `<button onclick="event.stopPropagation(); ${onclickGuru}" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
-                        : ``;
+                    // PENYELESAIAN MUKTAMAD: Pemain Audio Mini (Kalis Tab Baharu)
+                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
+                        ? `<button onclick="playMiniAudio(event, '${l.audioUrl}', 'btn-audio-smrc-${l.id}')" id="btn-audio-smrc-${l.id}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-play"></i> Dengar</button>` 
+                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio</span>`;
 
                     let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
                     if (cleanDate && cleanDate.includes('GMT')) {
@@ -5064,7 +5049,6 @@ function displayActiveLatihan() {
                             </div>
                             <div class="flex gap-2 items-center shrink-0">
                                 ${audioPlayerHTML}
-                                ${audioGuruHTML}
                                 <span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-extrabold border border-slate-200 w-12 text-center">${displayScore}</span>
                             </div>
                         </div>
@@ -6634,25 +6618,10 @@ function renderOverallAnalysis() {
                         onclickMurid = `openFloatingAudioPlayer('${l.audioUrl}')`;
                     }
 
-                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== "" 
-                        ? `<button onclick="event.stopPropagation(); ${onclickMurid}" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
-                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
-                        
-                    let onclickGuru = '';
-                    if (l.audioGuru && l.audioGuru.startsWith('http')) {
-                        let safeUrlGuru = l.audioGuru;
-                        if(safeUrlGuru.includes('uc?export=download&id=')) {
-                            let dId = safeUrlGuru.split('id=')[1];
-                            safeUrlGuru = `https://drive.google.com/file/d/${dId}/view`;
-                        }
-                        onclickGuru = `window.open('${safeUrlGuru}', '_blank')`;
-                    } else {
-                        onclickGuru = `openFloatingAudioPlayer('${l.audioGuru}')`;
-                    }
-
-                    const audioGuruHTML = l.audioGuru && l.audioGuru.trim() !== "" 
-                        ? `<button onclick="event.stopPropagation(); ${onclickGuru}" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
-                        : ``;
+                    // PENYELESAIAN MUKTAMAD: Pemain Audio Mini (Kalis Tab Baharu)
+                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
+                        ? `<button onclick="playMiniAudio(event, '${l.audioUrl}', 'btn-audio-rc-${l.id}')" id="btn-audio-rc-${l.id}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-play"></i> Dengar</button>` 
+                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio</span>`;
 
                     let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
                     if (cleanDate && cleanDate.includes('GMT')) {
@@ -6667,25 +6636,23 @@ function renderOverallAnalysis() {
 
                     let isChecked = customLogIds && customLogIds.includes(String(l.id)) ? 'checked' : '';
 
-                    // PELINDUNG: Butang semak wujud jika audio murid ada
                     const btnSemakHTML = l.audioUrl && l.audioUrl.trim() !== ""
-                        ? `<button onclick="event.stopPropagation(); openManualGradeTeacher('${l.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded font-bold transition-all shadow-sm flex items-center gap-1.5" title="Semak Sebutan"><i class="fa-solid fa-user-pen"></i> Semak</button>`
+                        ? `<button onclick="openManualGradeTeacher('${l.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded font-bold transition-all shadow-sm flex items-center gap-1.5" title="Semak Sebutan"><i class="fa-solid fa-user-pen"></i> Semak</button>`
                         : ``;
 
                      audioContainer.innerHTML += `
-                        <div id="log-row-rc-${l.id}" class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 group transition-all hover:bg-slate-50 rounded-lg px-2 cursor-pointer">
+                        <div id="log-row-rc-${l.id}" class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 transition-all hover:bg-slate-50 rounded-lg px-2 cursor-pointer group">
                             <div class="flex items-center mr-3 shrink-0" onclick="event.stopPropagation()">
                                 <input type="checkbox" class="log-checkbox w-4 h-4 cursor-pointer text-indigo-600 rounded border-slate-300 focus:ring-indigo-500" value="${l.id}" onchange="updateSelectedLogsCheckbox('rc')" ${isChecked}>
                             </div>
+                            
                             <div class="min-w-0 flex-1 flex items-center flex-wrap gap-y-1" onclick="renderSpecificWeakness('${l.id}', 'rc', ${l.sessionNumber}, '${cleanDate}')">
-
                                 <span class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">Sesi ${l.sessionNumber} - ${l.topicTitle} (${cleanDate})</span>
                                 ${latestBadge}
                                 ${reviewBadge}
                             </div>
                             <div class="flex gap-2 items-center shrink-0">
                                 ${audioPlayerHTML}
-                                ${audioGuruHTML}
                                 <span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-extrabold border border-slate-200 w-12 text-center">${displayScore}</span>
                                 ${btnSemakHTML}
                             </div>
