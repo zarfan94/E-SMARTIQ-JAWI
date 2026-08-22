@@ -5014,7 +5014,8 @@ function displayActiveLatihan() {
 
                     // PENYELESAIAN ANALISIS 4: Tukar dari <audio controls> kepada butang Pemain Terapung
                     // KOD SELARAS ENGLISH: Gunakan butang terapung untuk atasi halangan Google Drive
-                    const audioPlayerHTML = l.audioUrl 
+                  // KOD BAHARU: Pemain Audio Terapung memintas sekatan 'disable' Google Drive
+                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== "" 
                         ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
                         : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
                         
@@ -5022,28 +5023,10 @@ function displayActiveLatihan() {
                         ? `<button onclick="openFloatingAudioPlayer('${l.audioGuru}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
                         : ``;
 
-                    let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
-                    if (cleanDate && cleanDate.includes('GMT')) {
-                        const d = new Date(cleanDate);
-                        if (!isNaN(d.getTime())) {
-                            cleanDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                        }
-                    } else if (cleanDate && cleanDate.includes('-')) {
-                        const parts = cleanDate.split('-');
-                        if (parts.length === 3) cleanDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                    }
-
-                    let isChecked = customLogIds && customLogIds.includes(String(l.id)) ? 'checked' : '';
-
-                     audioContainer.innerHTML += `
-                        <div id="log-row-smrc-${l.id}" class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 transition-all hover:bg-slate-50 rounded-lg px-2 cursor-pointer group">
-                            <div class="flex items-center mr-3 shrink-0" onclick="event.stopPropagation()">
-                                <input type="checkbox" class="log-checkbox w-4 h-4 cursor-pointer text-indigo-600 rounded border-slate-300 focus:ring-indigo-500" value="${l.id}" onchange="updateSelectedLogsCheckbox('smrc')" ${isChecked}>
-                            </div>
-                            
-                            <div class="min-w-0 flex-1 flex items-center flex-wrap gap-y-1" onclick="renderSpecificWeakness('${l.id}', 'smrc', ${l.sessionNumber}, '${cleanDate}')">
-
-                                <span class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">Sesi ${l.sessionNumber} - ${l.topicTitle} (${cleanDate})</span>
+                    audioContainer.innerHTML += `
+                        <div onclick="renderSpecificWeakness('${l.id}', 'smrc')" class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 transition-colors hover:bg-slate-50 rounded-lg px-2 cursor-pointer group">
+                            <div class="min-w-0 flex-1 flex items-center flex-wrap gap-y-1">
+                                <span class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${l.topicTitle} (${l.date})</span>
                                 ${latestBadge}
                                 ${reviewBadge}
                             </div>
@@ -6604,10 +6587,10 @@ function renderOverallAnalysis() {
                         `<span class="ml-1.5 bg-emerald-50 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded font-bold"><i class="fa-solid fa-circle-check"></i> Disemak</span>` : 
                         `<span class="ml-1.5 bg-amber-50 text-amber-700 text-[9px] px-1.5 py-0.5 rounded font-bold border border-amber-200"><i class="fa-solid fa-clock"></i> Belum Disemak</span>`;
 
-                    const displayScore = l.isReviewed ? `${activeScore}%` : 'N/A';
+                   const displayScore = l.isReviewed ? `${activeScore}%` : 'N/A';
 
-                   // KOD SELARAS ENGLISH: Gunakan butang terapung untuk atasi halangan Google Drive
-                    const audioPlayerHTML = l.audioUrl 
+                    // KOD BAHARU: Pemain Audio Terapung memintas sekatan 'disable' Google Drive
+                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== "" 
                         ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
                         : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
                         
@@ -6628,6 +6611,7 @@ function renderOverallAnalysis() {
 
                     let isChecked = customLogIds && customLogIds.includes(String(l.id)) ? 'checked' : '';
 
+                    // PELINDUNG: Butang semak hanya wujud jika fail audio ada
                     const btnSemakHTML = l.audioUrl && l.audioUrl.trim() !== ""
                         ? `<button onclick="openManualGradeTeacher('${l.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded font-bold transition-all shadow-sm flex items-center gap-1.5" title="Semak Sebutan"><i class="fa-solid fa-user-pen"></i> Semak</button>`
                         : ``;
