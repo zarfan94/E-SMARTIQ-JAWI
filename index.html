@@ -1824,23 +1824,27 @@ async function muatTurunSkorDariSheet() {
                     reviewed = (reviewed.toLowerCase() === 'true');
                 }
                 
-                // KOD BAHARU: Penukar Pautan Google Drive supaya boleh dimainkan terus di dalam Pemain Kotak Terapung
+                // PENYELESAIAN MUKTAMAD DRIVE: Penukar Pautan Google Drive Kebal
                 let cleanAudio = log.audioUrl;
-                if (typeof cleanAudio === 'string' && cleanAudio.includes("drive.google.com/file/d/")) {
-                    const match = cleanAudio.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                    if (match && match[1]) cleanAudio = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+                if (typeof cleanAudio === 'string' && (cleanAudio.includes("drive.google.com") || cleanAudio.includes("docs.google.com"))) {
+                    let driveId = "";
+                    if (cleanAudio.includes("/d/")) driveId = cleanAudio.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+                    else if (cleanAudio.includes("id=")) driveId = cleanAudio.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1];
+                    if (driveId) cleanAudio = `https://drive.google.com/uc?export=download&id=${driveId}`;
                 }
                 
                 let cleanAudioGuru = log.audioGuru;
-                if (typeof cleanAudioGuru === 'string' && cleanAudioGuru.includes("drive.google.com/file/d/")) {
-                    const match = cleanAudioGuru.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                    if (match && match[1]) cleanAudioGuru = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+                if (typeof cleanAudioGuru === 'string' && (cleanAudioGuru.includes("drive.google.com") || cleanAudioGuru.includes("docs.google.com"))) {
+                    let driveId = "";
+                    if (cleanAudioGuru.includes("/d/")) driveId = cleanAudioGuru.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+                    else if (cleanAudioGuru.includes("id=")) driveId = cleanAudioGuru.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1];
+                    if (driveId) cleanAudioGuru = `https://drive.google.com/uc?export=download&id=${driveId}`;
                 }
 
                 return {
                     ...log,
-                    audioUrl: cleanAudio, // Pautan Drive Murid sedia dimainkan
-                    audioGuru: cleanAudioGuru, // Pautan Drive Guru sedia dimainkan
+                    audioUrl: cleanAudio,
+                    audioGuru: cleanAudioGuru,
                     weaknessTags: Array.isArray(tags) ? tags : [],
                     isReviewed: Boolean(reviewed),
                     score: Number(log.score) || 0,
@@ -5012,9 +5016,7 @@ function displayActiveLatihan() {
 
                     const displayScore = l.isReviewed ? `${activeScore}%` : 'N/A';
 
-                    // PENYELESAIAN ANALISIS 4: Tukar dari <audio controls> kepada butang Pemain Terapung
-                    // KOD SELARAS ENGLISH: Gunakan butang terapung untuk atasi halangan Google Drive
-                  // KOD BAHARU: Pemain Audio Terapung memintas sekatan 'disable' Google Drive
+                   // PENYELESAIAN PEMAIN AUDIO TERAPUNG (Memintas Google Drive Block)
                     const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== "" 
                         ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
                         : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
@@ -5023,10 +5025,27 @@ function displayActiveLatihan() {
                         ? `<button onclick="openFloatingAudioPlayer('${l.audioGuru}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
                         : ``;
 
+                    let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
+                    if (cleanDate && cleanDate.includes('GMT')) {
+                        const d = new Date(cleanDate);
+                        if (!isNaN(d.getTime())) {
+                            cleanDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                        }
+                    } else if (cleanDate && cleanDate.includes('-')) {
+                        const parts = cleanDate.split('-');
+                        if (parts.length === 3) cleanDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+
+                    let isChecked = customLogIds && customLogIds.includes(String(l.id)) ? 'checked' : '';
+
                     audioContainer.innerHTML += `
-                        <div onclick="renderSpecificWeakness('${l.id}', 'smrc')" class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 transition-colors hover:bg-slate-50 rounded-lg px-2 cursor-pointer group">
-                            <div class="min-w-0 flex-1 flex items-center flex-wrap gap-y-1">
-                                <span class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${l.topicTitle} (${l.date})</span>
+                        <div class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 transition-colors hover:bg-slate-50 rounded-lg px-2 cursor-pointer group">
+                            <div class="flex items-center mr-3 shrink-0" onclick="event.stopPropagation()">
+                                <input type="checkbox" class="log-checkbox w-4 h-4 cursor-pointer text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" value="${l.id}" onchange="updateSelectedLogsCheckbox('smrc')" ${isChecked}>
+                            </div>
+                            
+                            <div class="min-w-0 flex-1 flex items-center flex-wrap gap-y-1" onclick="renderSpecificWeakness('${l.id}', 'smrc')">
+                                <span class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${l.topicTitle} (${cleanDate})</span>
                                 ${latestBadge}
                                 ${reviewBadge}
                             </div>
@@ -6589,7 +6608,7 @@ function renderOverallAnalysis() {
 
                    const displayScore = l.isReviewed ? `${activeScore}%` : 'N/A';
 
-                    // KOD BAHARU: Pemain Audio Terapung memintas sekatan 'disable' Google Drive
+                   // PENYELESAIAN PEMAIN AUDIO TERAPUNG (Memintas Google Drive Block)
                     const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== "" 
                         ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
                         : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
@@ -6611,19 +6630,18 @@ function renderOverallAnalysis() {
 
                     let isChecked = customLogIds && customLogIds.includes(String(l.id)) ? 'checked' : '';
 
-                    // PELINDUNG: Butang semak hanya wujud jika fail audio ada
+                    // PELINDUNG: Butang semak wujud jika audio murid ada
                     const btnSemakHTML = l.audioUrl && l.audioUrl.trim() !== ""
                         ? `<button onclick="openManualGradeTeacher('${l.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded font-bold transition-all shadow-sm flex items-center gap-1.5" title="Semak Sebutan"><i class="fa-solid fa-user-pen"></i> Semak</button>`
                         : ``;
 
                      audioContainer.innerHTML += `
-                        <div id="log-row-rc-${l.id}" class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 group transition-all hover:bg-slate-50 rounded-lg px-2 cursor-pointer">
+                        <div class="py-2.5 flex justify-between items-center text-xs border-b last:border-0 border-slate-100 group transition-colors hover:bg-slate-50 rounded-lg px-2 cursor-pointer">
                             <div class="flex items-center mr-3 shrink-0" onclick="event.stopPropagation()">
-                                <input type="checkbox" class="log-checkbox w-4 h-4 cursor-pointer text-indigo-600 rounded border-slate-300 focus:ring-indigo-500" value="${l.id}" onchange="updateSelectedLogsCheckbox('rc')" ${isChecked}>
+                                <input type="checkbox" class="log-checkbox w-4 h-4 cursor-pointer text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" value="${l.id}" onchange="updateSelectedLogsCheckbox('rc')" ${isChecked}>
                             </div>
-                            <div class="min-w-0 flex-1 flex items-center flex-wrap gap-y-1" onclick="renderSpecificWeakness('${l.id}', 'rc', ${l.sessionNumber}, '${cleanDate}')">
-
-                                <span class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">Sesi ${l.sessionNumber} - ${l.topicTitle} (${cleanDate})</span>
+                            <div class="min-w-0 flex-1 flex items-center flex-wrap gap-y-1" onclick="renderSpecificWeakness('${l.id}', 'rc')">
+                                <span class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${l.topicTitle} (${cleanDate})</span>
                                 ${latestBadge}
                                 ${reviewBadge}
                             </div>
