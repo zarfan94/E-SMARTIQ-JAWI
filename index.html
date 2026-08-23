@@ -3894,26 +3894,150 @@ function saveTopic() {
             document.getElementById('btn-record-teacher').classList.remove('hidden');
         }
 
-        // --- FUNGSI PEMAIN AUDIO TERAPUNG (DUA ALAM) ---
-        function openFloatingAudioPlayer(audioUrl) {
-            const playerBox = document.getElementById('floating-audio-player');
-            const audioEl = document.getElementById('floating-audio-element');
+       // =========================================================================
+        // KOD BARU: LOGIK KOTAK TERAPUNG BOLEH ALIH (DRAGGABLE AUDIO PLAYER)
+        // =========================================================================
+       function openFloatingAudioPlayer(audioUrl) {
+            // PENYELESAIAN 1: Tukar carian ID kepada nama asal Jawi
+            const widget = document.getElementById('floating-audio-player'); 
+            const audioEl = document.getElementById('floating-audio-element'); 
             
-            if (playerBox && audioEl) {
-                audioEl.src = audioUrl;
-                playerBox.classList.remove('translate-y-[150%]', 'opacity-0');
-                audioEl.play().catch(e => console.warn("Pemain terapung disekat pelayar:", e));
+            if (!widget || !audioEl) return; // Pelindung Ralat Null Mutlak
+            
+            const container = audioEl.parentElement;
+
+            // Buang pemain audio lokal jika wujud dari sesi sebelum ini
+            let existingAudio = document.getElementById('floating-local-audio');
+            if (existingAudio) existingAudio.remove();
+
+            // LOGIK PEMAIN DUA ALAM (DUAL-MODE) DISERAGAMKAN UNTUK JAWI
+            if (audioUrl && (audioUrl.startsWith('data:audio') || audioUrl.length > 2000)) {
+                // MOD 1: AUDIO SEGAR (Base64) - Guna Pemain HTML Asli supaya tak tercekik
+                audioEl.classList.add('hidden'); 
+                
+                const localAudio = document.createElement('audio');
+                localAudio.id = 'floating-local-audio';
+                localAudio.controls = true;
+                localAudio.autoplay = true;
+                localAudio.className = "w-full h-8 outline-none";
+                
+                // Tukar Base64 gergasi kepada Pautan Maya (Blob URL) yang sangat ringan
+                fetch(audioUrl)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        localAudio.src = URL.createObjectURL(blob);
+                        localAudio.play().catch(e => console.warn(e));
+                    });
+                
+                container.appendChild(localAudio);
+                
+            } else {
+                // MOD 2: AUDIO LAMA (Link Google Drive)
+                audioEl.classList.remove('hidden');
+                
+                let previewUrl = audioUrl;
+                if (audioUrl && audioUrl.includes('uc?export=download&id=')) {
+                    previewUrl = audioUrl; 
+                } else if (audioUrl && audioUrl.includes('/view')) {
+                    const fileId = audioUrl.split('/d/')[1]?.split('/')[0];
+                    if (fileId) {
+                        previewUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
+                    }
+                }
+                
+                audioEl.src = previewUrl || "";
+                audioEl.play().catch(e => console.warn(e));
             }
+            
+            // Buka kotak (Menyokong Tailwind UI Jawi)
+            widget.classList.remove('translate-y-[150%]', 'opacity-0', 'hidden');
         }
 
         function closeFloatingAudioPlayer() {
-            const playerBox = document.getElementById('floating-audio-player');
+            const widget = document.getElementById('floating-audio-player');
             const audioEl = document.getElementById('floating-audio-element');
             
-            if (playerBox && audioEl) {
+            if (widget) widget.classList.add('translate-y-[150%]', 'opacity-0');
+            
+            if (audioEl) {
                 audioEl.pause();
                 audioEl.src = "";
-                playerBox.classList.add('translate-y-[150%]', 'opacity-0');
+            }
+            
+            // Matikan dan buang pemain audio lokal jika ia sedang digunakan
+            let localAudio = document.getElementById('floating-local-audio');
+            if (localAudio) {
+                localAudio.pause();
+                localAudio.src = "";
+                localAudio.remove();
+            }
+        }
+
+        // --- ENJIN DRAG & DROP UNTUK KOTAK TERAPUNG ---
+        setTimeout(() => { 
+            // PENYELESAIAN 2: Halakan enjin drag kepada ID kotak Jawi
+            const widget = document.getElementById("floating-audio-player"); 
+            if (widget) dragElement(widget); 
+        }, 1000);
+
+        function dragElement(elmnt) {
+            if (!elmnt) return; // PENYELESAIAN 3: Halang ralat onmousedown null dari berlaku
+
+            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            // Jawi tiada ID 'floating-audio-header', jadi kita guna elemen teratas kotak sebagai pemegang (drag handle)
+            const header = elmnt.firstElementChild; 
+            if (header) {
+                header.style.cursor = "move"; 
+                header.onmousedown = dragMouseDown;
+                header.ontouchstart = dragTouchStart;
+            } else {
+                elmnt.onmousedown = dragMouseDown;
+            }
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function dragTouchStart(e) {
+                e = e || window.event;
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+                document.ontouchend = closeDragElement;
+                document.ontouchmove = elementTouchDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function elementTouchDrag(e) {
+                e = e || window.event;
+                pos1 = pos3 - e.touches[0].clientX;
+                pos2 = pos4 - e.touches[0].clientY;
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
             }
         }
 
@@ -5020,8 +5144,12 @@ function displayActiveLatihan() {
 
                     // PENYELESAIAN MUKTAMAD: Pemain Audio Mini (Kalis Tab Baharu)
                     const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
-                        ? `<button onclick="playMiniAudio(event, '${l.audioUrl}', 'btn-audio-smrc-${l.id}')" id="btn-audio-smrc-${l.id}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-play"></i> Dengar</button>` 
-                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio</span>`;
+                        ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
+                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
+                        
+                    const audioGuruHTML = l.audioGuru && l.audioGuru.trim() !== "" 
+                        ? `<button onclick="openFloatingAudioPlayer('${l.audioGuru}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
+                        : ``;
 
                     let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
                     if (cleanDate && cleanDate.includes('GMT')) {
@@ -5047,11 +5175,11 @@ function displayActiveLatihan() {
                                 ${latestBadge}
                                 ${reviewBadge}
                             </div>
-                            <div class="flex gap-2 items-center shrink-0">
+<div class="flex gap-2 items-center shrink-0">
                                 ${audioPlayerHTML}
+                                ${audioGuruHTML}
                                 <span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-extrabold border border-slate-200 w-12 text-center">${displayScore}</span>
-                            </div>
-                        </div>
+                            </div>                        </div>
                     `;
                 });
             } else {
@@ -6619,9 +6747,13 @@ function renderOverallAnalysis() {
                     }
 
                     // PENYELESAIAN MUKTAMAD: Pemain Audio Mini (Kalis Tab Baharu)
-                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
-                        ? `<button onclick="playMiniAudio(event, '${l.audioUrl}', 'btn-audio-rc-${l.id}')" id="btn-audio-rc-${l.id}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-play"></i> Dengar</button>` 
-                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio</span>`;
+                   const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
+                        ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
+                        : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
+                        
+                    const audioGuruHTML = l.audioGuru && l.audioGuru.trim() !== "" 
+                        ? `<button onclick="openFloatingAudioPlayer('${l.audioGuru}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
+                        : ``;
 
                     let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
                     if (cleanDate && cleanDate.includes('GMT')) {
@@ -6653,6 +6785,7 @@ function renderOverallAnalysis() {
                             </div>
                             <div class="flex gap-2 items-center shrink-0">
                                 ${audioPlayerHTML}
+                                ${audioGuruHTML}
                                 <span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-extrabold border border-slate-200 w-12 text-center">${displayScore}</span>
                                 ${btnSemakHTML}
                             </div>
