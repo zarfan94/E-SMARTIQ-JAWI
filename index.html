@@ -3142,9 +3142,10 @@ function renderSpecificWeakness(logId, prefix, sessionNum = null, cleanDateStr =
                 }
             }
             if (statusBadge) {
-                statusBadge.innerHTML = starHTML; // WAJIB GUNA innerHTML untuk memaparkan span HTML
+                statusBadge.innerHTML = starHTML;
                 statusBadge.className = badgeClass;
             }
+
             // =================================================================
 
             const activeChart = prefix === 'smrc' ? studentChartInstance : chartInstance;
@@ -5146,15 +5147,13 @@ function displayActiveLatihan() {
             }
 
            let starHTML = `<span class="text-slate-400 font-bold text-sm italic">Belum Dinilai</span>`;
-            // Buang background kotak, jadikan ia format rata kiri yang kemas
             let badgeClass = 'self-center sm:self-start flex items-center gap-2';
             
-            let top3Logs = latestLogsDesc.slice(0, 3);
-            if (top3Logs.length > 0) {
-                let sumScore = top3Logs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
-                let uniqueAvg = Math.round(sumScore / top3Logs.length);
+            // PENYELESAIAN: Gunakan uniqueTopicsLogs (Sesi yang dipilih) supaya Bintang berubah mengikut graf!
+            if (uniqueTopicsLogs.length > 0) {
+                let sumScore = uniqueTopicsLogs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
+                let uniqueAvg = Math.round(sumScore / uniqueTopicsLogs.length);
                 
-                // GAYA BINTANG 3D BERKILAT: Terapung, bersinar emas, besar sederhana, dan melompat jika disentuh
                 const starStyle = "text-3xl sm:text-4xl drop-shadow-[0_6px_6px_rgba(250,204,21,0.6)] saturate-150 brightness-110 transform hover:scale-110 hover:-translate-y-1 transition-all duration-300 inline-block cursor-default";
                 const textStyle = "text-sm sm:text-base font-black uppercase tracking-widest drop-shadow-sm ml-2";
                 
@@ -5176,10 +5175,9 @@ function displayActiveLatihan() {
             }
 
             const statusInfo = evaluateReadingStatus(avgScore, avgJeda, totalStuck, totalTertinggal, dominantLevel);
-            // PENYELESAIAN BUG LAMA: Betulkan ID untuk Tab Murid
             const statusBadge = document.getElementById('smrc-overall-status-badge');
             if (statusBadge) {
-                statusBadge.innerHTML = starHTML; // WAJIB GUNA innerHTML untuk memaparkan span 3D
+                statusBadge.innerHTML = starHTML;
                 statusBadge.className = badgeClass;
             }
 
@@ -6786,10 +6784,10 @@ function renderOverallAnalysis() {
            let starHTML = `<span class="text-slate-400 font-bold text-sm italic">Belum Dinilai</span>`;
             let badgeClass = 'self-center sm:self-start flex items-center gap-2';
             
-            let top3Logs = latestLogsDesc.slice(0, 3);
-            if (top3Logs.length > 0) {
-                let sumScore = top3Logs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
-                let uniqueAvg = Math.round(sumScore / top3Logs.length);
+            // PENYELESAIAN: Gunakan uniqueTopicsLogs (Sesi yang dipilih) supaya Bintang berubah mengikut graf!
+            if (uniqueTopicsLogs.length > 0) {
+                let sumScore = uniqueTopicsLogs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
+                let uniqueAvg = Math.round(sumScore / uniqueTopicsLogs.length);
                 
                 const starStyle = "text-3xl sm:text-4xl drop-shadow-[0_6px_6px_rgba(250,204,21,0.6)] saturate-150 brightness-110 transform hover:scale-110 hover:-translate-y-1 transition-all duration-300 inline-block cursor-default";
                 const textStyle = "text-sm sm:text-base font-black uppercase tracking-widest drop-shadow-sm ml-2";
