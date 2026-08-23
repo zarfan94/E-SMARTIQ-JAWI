@@ -3895,76 +3895,69 @@ function saveTopic() {
         }
 
        // =========================================================================
-        // KOD BARU: LOGIK KOTAK TERAPUNG BOLEH ALIH (DRAGGABLE AUDIO PLAYER)
+        // LOGIK KOTAK TERAPUNG BOLEH ALIH (IFRAME GOOGLE DRIVE + BASE64)
         // =========================================================================
-       function openFloatingAudioPlayer(audioUrl) {
-            // PENYELESAIAN 1: Tukar carian ID kepada nama asal Jawi
-            const widget = document.getElementById('floating-audio-player'); 
-            const audioEl = document.getElementById('floating-audio-element'); 
+        function openFloatingAudioPlayer(audioUrl) {
+            const widget = document.getElementById('floating-audio-widget');
+            const iframe = document.getElementById('floating-audio-iframe');
+            const loader = document.getElementById('floating-audio-loader');
             
-            if (!widget || !audioEl) return; // Pelindung Ralat Null Mutlak
-            
-            const container = audioEl.parentElement;
+            if (!widget || !iframe) return;
 
-            // Buang pemain audio lokal jika wujud dari sesi sebelum ini
-            let existingAudio = document.getElementById('floating-local-audio');
-            if (existingAudio) existingAudio.remove();
+            // Bersihkan pemain lokal jika wujud dari sesi lepas
+            let existingLocal = document.getElementById('floating-local-audio');
+            if (existingLocal) existingLocal.remove();
 
-            // LOGIK PEMAIN DUA ALAM (DUAL-MODE) DISERAGAMKAN UNTUK JAWI
+            widget.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            iframe.classList.add('hidden');
+            iframe.src = ""; // Reset iframe
+
             if (audioUrl && (audioUrl.startsWith('data:audio') || audioUrl.length > 2000)) {
-                // MOD 1: AUDIO SEGAR (Base64) - Guna Pemain HTML Asli supaya tak tercekik
-                audioEl.classList.add('hidden'); 
+                // MOD 1: AUDIO SEGAR (Base64) - Guna Pemain HTML Asli yang diselit atas Iframe
+                loader.classList.add('hidden');
                 
                 const localAudio = document.createElement('audio');
                 localAudio.id = 'floating-local-audio';
                 localAudio.controls = true;
                 localAudio.autoplay = true;
-                localAudio.className = "w-full h-8 outline-none";
+                // Tutup iframe sepenuhnya dengan latar gelap
+                localAudio.className = "w-full h-full absolute inset-0 z-20 outline-none bg-slate-900";
                 
-                // Tukar Base64 gergasi kepada Pautan Maya (Blob URL) yang sangat ringan
-                fetch(audioUrl)
-                    .then(res => res.blob())
-                    .then(blob => {
-                        localAudio.src = URL.createObjectURL(blob);
-                        localAudio.play().catch(e => console.warn(e));
-                    });
+                // Tukar Base64 gergasi kepada Pautan Maya (Blob URL)
+                fetch(audioUrl).then(res => res.blob()).then(blob => {
+                    localAudio.src = URL.createObjectURL(blob);
+                    localAudio.play().catch(e => console.warn(e));
+                });
                 
-                container.appendChild(localAudio);
-                
+                iframe.parentElement.appendChild(localAudio);
+
             } else {
-                // MOD 2: AUDIO LAMA (Link Google Drive)
-                audioEl.classList.remove('hidden');
-                
-                let previewUrl = audioUrl;
-                if (audioUrl && audioUrl.includes('uc?export=download&id=')) {
-                    previewUrl = audioUrl; 
-                } else if (audioUrl && audioUrl.includes('/view')) {
-                    const fileId = audioUrl.split('/d/')[1]?.split('/')[0];
-                    if (fileId) {
-                        previewUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
-                    }
+                // MOD 2: AUDIO GOOGLE DRIVE (Iframe Bypass Sekatan KPM / DELIMa)
+                let embedUrl = audioUrl;
+                if (audioUrl && audioUrl.includes('view')) {
+                    embedUrl = audioUrl.replace('/view', '/preview'); // Paksa mode preview
+                } else if (audioUrl && audioUrl.includes('uc?export=download&id=')) {
+                    const fileId = audioUrl.split('id=')[1];
+                    embedUrl = `https://drive.google.com/file/d/${fileId}/preview`; // Paksa mode preview
                 }
+
+                iframe.src = embedUrl;
                 
-                audioEl.src = previewUrl || "";
-                audioEl.play().catch(e => console.warn(e));
+                iframe.onload = function() {
+                    loader.classList.add('hidden');
+                    iframe.classList.remove('hidden');
+                };
             }
-            
-            // Buka kotak (Menyokong Tailwind UI Jawi)
-            widget.classList.remove('translate-y-[150%]', 'opacity-0', 'hidden');
         }
 
         function closeFloatingAudioPlayer() {
-            const widget = document.getElementById('floating-audio-player');
-            const audioEl = document.getElementById('floating-audio-element');
+            const widget = document.getElementById('floating-audio-widget');
+            const iframe = document.getElementById('floating-audio-iframe');
             
-            if (widget) widget.classList.add('translate-y-[150%]', 'opacity-0');
+            if (widget) widget.classList.add('hidden');
+            if (iframe) iframe.src = "";
             
-            if (audioEl) {
-                audioEl.pause();
-                audioEl.src = "";
-            }
-            
-            // Matikan dan buang pemain audio lokal jika ia sedang digunakan
             let localAudio = document.getElementById('floating-local-audio');
             if (localAudio) {
                 localAudio.pause();
@@ -3974,21 +3967,14 @@ function saveTopic() {
         }
 
         // --- ENJIN DRAG & DROP UNTUK KOTAK TERAPUNG ---
-        setTimeout(() => { 
-            // PENYELESAIAN 2: Halakan enjin drag kepada ID kotak Jawi
-            const widget = document.getElementById("floating-audio-player"); 
-            if (widget) dragElement(widget); 
-        }, 1000);
+        setTimeout(() => { dragElement(document.getElementById("floating-audio-widget")); }, 1000);
 
         function dragElement(elmnt) {
-            if (!elmnt) return; // PENYELESAIAN 3: Halang ralat onmousedown null dari berlaku
-
+            if (!elmnt) return;
             var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const header = document.getElementById("floating-audio-header");
             
-            // Jawi tiada ID 'floating-audio-header', jadi kita guna elemen teratas kotak sebagai pemegang (drag handle)
-            const header = elmnt.firstElementChild; 
             if (header) {
-                header.style.cursor = "move"; 
                 header.onmousedown = dragMouseDown;
                 header.ontouchstart = dragTouchStart;
             } else {
