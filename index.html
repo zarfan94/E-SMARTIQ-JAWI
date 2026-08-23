@@ -5127,40 +5127,43 @@ function displayActiveLatihan() {
                 }
             }
 
-            let starHTML = "Belum Dinilai";
-            let badgeClass = 'bg-slate-100 text-slate-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-slate-200';
+           let starHTML = `<span class="text-slate-400 font-bold text-sm italic">Belum Dinilai</span>`;
+            // Buang background kotak, jadikan ia format rata kiri yang kemas
+            let badgeClass = 'self-center sm:self-start flex items-center gap-2';
             
             let top3Logs = latestLogsDesc.slice(0, 3);
             if (top3Logs.length > 0) {
                 let sumScore = top3Logs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
                 let uniqueAvg = Math.round(sumScore / top3Logs.length);
                 
+                // GAYA BINTANG 3D BERKILAT: Terapung, bersinar emas, besar sederhana, dan melompat jika disentuh
+                const starStyle = "text-3xl sm:text-4xl drop-shadow-[0_6px_6px_rgba(250,204,21,0.6)] saturate-150 brightness-110 transform hover:scale-110 hover:-translate-y-1 transition-all duration-300 inline-block cursor-default";
+                const textStyle = "text-sm sm:text-base font-black uppercase tracking-widest drop-shadow-sm ml-2";
+                
                 if (uniqueAvg >= 80) {
-                    starHTML = "⭐⭐⭐⭐⭐ Cemerlang";
-                    badgeClass = 'bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-emerald-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐⭐⭐</span> <span class="${textStyle} text-emerald-600">Cemerlang</span>`;
                 }
                 else if (uniqueAvg >= 65) {
-                    starHTML = "⭐⭐⭐⭐ Kepujian";
-                    badgeClass = 'bg-blue-100 text-blue-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-blue-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐⭐</span> <span class="${textStyle} text-blue-600">Kepujian</span>`;
                 }
                 else if (uniqueAvg >= 50) {
-                    starHTML = "⭐⭐⭐ Sederhana";
-                    badgeClass = 'bg-amber-100 text-amber-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-amber-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐</span> <span class="${textStyle} text-amber-600">Sederhana</span>`;
                 }
                 else if (uniqueAvg >= 30) {
-                    starHTML = "⭐⭐ Lemah";
-                    badgeClass = 'bg-orange-100 text-orange-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-orange-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐</span> <span class="${textStyle} text-orange-600">Lemah</span>`;
                 }
                 else {
-                    starHTML = "⭐ Kritis";
-                    badgeClass = 'bg-rose-100 text-rose-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-rose-200';
+                    starHTML = `<span class="${starStyle}">⭐</span> <span class="${textStyle} text-rose-600">Kritis</span>`;
                 }
             }
 
             const statusInfo = evaluateReadingStatus(avgScore, avgJeda, totalStuck, totalTertinggal, dominantLevel);
-            const statusBadge = document.getElementById('rc-overall-status-badge');
-            statusBadge.innerText = starHTML;
-            statusBadge.className = badgeClass;
+            // PENYELESAIAN BUG LAMA: Betulkan ID untuk Tab Murid
+            const statusBadge = document.getElementById('smrc-overall-status-badge');
+            if (statusBadge) {
+                statusBadge.innerHTML = starHTML; // WAJIB GUNA innerHTML untuk memaparkan span 3D
+                statusBadge.className = badgeClass;
+            }
 
             const activeTopics = JSON.parse(AppStorage.getItem('e_smart_topics')) || [];
             const allTopicsCompleted = activeTopics.length > 0 && activeTopics.every(t => personalLogs.some(l => String(l.topicId) === String(t.id) && l.isReviewed));
@@ -6762,40 +6765,40 @@ function renderOverallAnalysis() {
                 }
             }
 
-           let starHTML = "Belum Dinilai";
-            let badgeClass = 'bg-slate-100 text-slate-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-slate-200';
+           let starHTML = `<span class="text-slate-400 font-bold text-sm italic">Belum Dinilai</span>`;
+            let badgeClass = 'self-center sm:self-start flex items-center gap-2';
             
             let top3Logs = latestLogsDesc.slice(0, 3);
             if (top3Logs.length > 0) {
                 let sumScore = top3Logs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
                 let uniqueAvg = Math.round(sumScore / top3Logs.length);
                 
+                const starStyle = "text-3xl sm:text-4xl drop-shadow-[0_6px_6px_rgba(250,204,21,0.6)] saturate-150 brightness-110 transform hover:scale-110 hover:-translate-y-1 transition-all duration-300 inline-block cursor-default";
+                const textStyle = "text-sm sm:text-base font-black uppercase tracking-widest drop-shadow-sm ml-2";
+                
                 if (uniqueAvg >= 80) {
-                    starHTML = "⭐⭐⭐⭐⭐ Cemerlang";
-                    badgeClass = 'bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-emerald-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐⭐⭐</span> <span class="${textStyle} text-emerald-600">Cemerlang</span>`;
                 }
                 else if (uniqueAvg >= 65) {
-                    starHTML = "⭐⭐⭐⭐ Kepujian";
-                    badgeClass = 'bg-blue-100 text-blue-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-blue-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐⭐</span> <span class="${textStyle} text-blue-600">Kepujian</span>`;
                 }
                 else if (uniqueAvg >= 50) {
-                    starHTML = "⭐⭐⭐ Sederhana";
-                    badgeClass = 'bg-amber-100 text-amber-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-amber-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐</span> <span class="${textStyle} text-amber-600">Sederhana</span>`;
                 }
                 else if (uniqueAvg >= 30) {
-                    starHTML = "⭐⭐ Lemah";
-                    badgeClass = 'bg-orange-100 text-orange-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-orange-200';
+                    starHTML = `<span class="${starStyle}">⭐⭐</span> <span class="${textStyle} text-orange-600">Lemah</span>`;
                 }
                 else {
-                    starHTML = "⭐ Kritis";
-                    badgeClass = 'bg-rose-100 text-rose-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-rose-200';
+                    starHTML = `<span class="${starStyle}">⭐</span> <span class="${textStyle} text-rose-600">Kritis</span>`;
                 }
             }
 
             const statusInfo = evaluateReadingStatus(avgScore, avgJeda, totalStuck, totalTertinggal, dominantLevel);
-            const statusBadge = document.getElementById('smrc-overall-status-badge');
-            statusBadge.innerText = starHTML;
-            statusBadge.className = badgeClass;
+            const statusBadge = document.getElementById('rc-overall-status-badge');
+            if (statusBadge) {
+                statusBadge.innerHTML = starHTML;
+                statusBadge.className = badgeClass;
+            }
 
             const activeTopics = JSON.parse(AppStorage.getItem('e_smart_topics')) || [];
             const allTopicsCompleted = activeTopics.length > 0 && activeTopics.every(t => personalLogs.some(l => String(l.topicId) === String(t.id) && l.isReviewed));
