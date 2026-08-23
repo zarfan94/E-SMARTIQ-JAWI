@@ -3117,16 +3117,34 @@ function renderSpecificWeakness(logId, prefix, sessionNum = null, cleanDateStr =
             if (scoreSubtextEl) scoreSubtextEl.innerText = `Berdasarkan bacaan topik: ${t ? t.title : 'Pilihan'}`;
             if (trendEl) trendEl.innerHTML = ""; // Kosongkan trend bila tengok 1 rekod supaya tak keliru
             
-            // Kira Semula Bintang secara "Live" mengikut Skala 5 Tier
-            let starHTML = "Belum Dinilai";
+           // Kira Semula Bintang secara "Live" mengikut Skala 5 Tier (Gaya 3D Berkilat)
+            let starHTML = `<span class="text-slate-400 font-bold text-sm italic">Belum Dinilai</span>`;
+            let badgeClass = 'self-center sm:self-start flex items-center gap-2';
+            
             if (log.isReviewed) {
-                if (activeScore >= 80) starHTML = "⭐⭐⭐⭐⭐";
-                else if (activeScore >= 65) starHTML = "⭐⭐⭐⭐";
-                else if (activeScore >= 50) starHTML = "⭐⭐⭐";
-                else if (activeScore >= 30) starHTML = "⭐⭐";
-                else starHTML = "⭐";
+                const starStyle = "text-3xl sm:text-4xl drop-shadow-[0_6px_6px_rgba(250,204,21,0.6)] saturate-150 brightness-110 transform hover:scale-110 hover:-translate-y-1 transition-all duration-300 inline-block cursor-default";
+                const textStyle = "text-sm sm:text-base font-black uppercase tracking-widest drop-shadow-sm ml-2";
+                
+                if (activeScore >= 80) {
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐⭐⭐</span> <span class="${textStyle} text-emerald-600">Cemerlang</span>`;
+                }
+                else if (activeScore >= 65) {
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐⭐</span> <span class="${textStyle} text-blue-600">Kepujian</span>`;
+                }
+                else if (activeScore >= 50) {
+                    starHTML = `<span class="${starStyle}">⭐⭐⭐</span> <span class="${textStyle} text-amber-600">Sederhana</span>`;
+                }
+                else if (activeScore >= 30) {
+                    starHTML = `<span class="${starStyle}">⭐⭐</span> <span class="${textStyle} text-orange-600">Lemah</span>`;
+                }
+                else {
+                    starHTML = `<span class="${starStyle}">⭐</span> <span class="${textStyle} text-rose-600">Kritis</span>`;
+                }
             }
-            if (statusBadge) statusBadge.innerText = starHTML;
+            if (statusBadge) {
+                statusBadge.innerHTML = starHTML; // WAJIB GUNA innerHTML untuk memaparkan span HTML
+                statusBadge.className = badgeClass;
+            }
             // =================================================================
 
             const activeChart = prefix === 'smrc' ? studentChartInstance : chartInstance;
