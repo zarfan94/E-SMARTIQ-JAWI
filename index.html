@@ -5084,44 +5084,57 @@ function displayActiveLatihan() {
             // HANYA ISYTIHAR SEKALI SAHAJA DI SINI
             let reviewedLogs = allLogsAsc.filter(l => l.isReviewed);
 
+            // SENARAI TERKINI -> LAMA UNTUK PAPARAN SEJARAH & KOTAK ANALISIS
+            let latestLogsDesc = [...reviewedLogs].reverse();
+            
+            let uniqueTopicsLogs = [];
+            if (customLogIds && customLogIds.length > 0) {
+                // Kekalkan susunan asal (terkini dahulu) berdasarkan senarai carian
+                uniqueTopicsLogs = latestLogsDesc.filter(l => customLogIds.includes(String(l.id)));
+                showToast("Graf & Analisis dikemaskini mengikut sesi pilihan anda.", "success");
+            } else {
+                uniqueTopicsLogs = latestLogsDesc; 
+            }
+
             let avgScore = 0;
             let avgJeda = 0;
             let totalStuck = 0;
             let totalTertinggal = 0;
             let dominantLevel = 3;
 
-          if (reviewedLogs.length > 0) {
-                avgScore = Math.round(reviewedLogs.reduce((acc, curr) => acc + (curr.manualScore !== null ? curr.manualScore : curr.score), 0) / reviewedLogs.length);
-                avgJeda = reviewedLogs.reduce((acc, curr) => acc + curr.jeda, 0) / reviewedLogs.length;
-                totalStuck = reviewedLogs.reduce((acc, curr) => acc + curr.stuckCount, 0);
-                totalTertinggal = reviewedLogs.reduce((acc, curr) => acc + (curr.tertinggal || 0), 0);
-                dominantLevel = reviewedLogs[reviewedLogs.length - 1].level;
+            // KIRA MARKAH BERDASARKAN SENARAI YANG DIPILIH SAHAJA
+            if (uniqueTopicsLogs.length > 0) {
+                avgScore = Math.round(uniqueTopicsLogs.reduce((acc, curr) => acc + (curr.manualScore !== null ? curr.manualScore : curr.score), 0) / uniqueTopicsLogs.length);
+                avgJeda = uniqueTopicsLogs.reduce((acc, curr) => acc + curr.jeda, 0) / uniqueTopicsLogs.length;
+                totalStuck = uniqueTopicsLogs.reduce((acc, curr) => acc + curr.stuckCount, 0);
+                totalTertinggal = uniqueTopicsLogs.reduce((acc, curr) => acc + (curr.tertinggal || 0), 0);
+                dominantLevel = uniqueTopicsLogs[0].level;
             }
             
-            // PENYELESAIAN ISU 1: Logik Tajuk Purata
+            // PENYELESAIAN ISU 1: Logik Tajuk Purata & Skor Dinamik
             const smrcScoreTitleEl = document.getElementById('smrc-average-score')?.parentElement?.previousElementSibling;
             if (smrcScoreTitleEl) {
-                smrcScoreTitleEl.innerText = reviewedLogs.length > 1 ? "SKOR BACAAN PURATA" : "SKOR BACAAN (KESELURUHAN)";
+                if (uniqueTopicsLogs.length === 1 && customLogIds) {
+                    smrcScoreTitleEl.innerText = `SKOR BACAAN (SESI ${uniqueTopicsLogs[0].sessionNumber})`;
+                } else if (uniqueTopicsLogs.length > 1) {
+                    smrcScoreTitleEl.innerText = "SKOR BACAAN PURATA";
+                } else {
+                    smrcScoreTitleEl.innerText = "SKOR BACAAN (KESELURUHAN)";
+                }
             }
 
-            document.getElementById('smrc-average-score').innerText = reviewedLogs.length > 0 ? `${avgScore}%` : "N/A";
-            document.getElementById('smrc-trend-indicator').innerHTML = calculateTrend(personalLogs, selectedMonth);
+            document.getElementById('smrc-average-score').innerText = uniqueTopicsLogs.length > 0 ? `${avgScore}%` : "N/A";
             
-            // Mengembalikan teks sub-keterangan asal jika cikgu tekan "Tunjuk Keseluruhan"
+            // Sembunyikan Trend Indicator jika cikgu sedang pilih sesi spesifik
+            document.getElementById('smrc-trend-indicator').innerHTML = customLogIds ? "" : calculateTrend(personalLogs, selectedMonth);
+            
             const smrcSubtextEl = document.getElementById('smrc-average-subtext');
             if (smrcSubtextEl) {
-                smrcSubtextEl.innerText = selectedMonth === "All" ? "Berdasarkan kesemua topik aktif" : `Purata sebutan pada bulan ${formatMonth(selectedMonth)}`;
-            }
-
-            // SENARAI TERKINI -> LAMA UNTUK PAPARAN SEJARAH & KOTAK ANALISIS
-            let latestLogsDesc = [...reviewedLogs].reverse();
-            
-            let uniqueTopicsLogs = [];
-            if (customLogIds && customLogIds.length > 0) {
-                uniqueTopicsLogs = latestLogsDesc.filter(l => customLogIds.includes(String(l.id)));
-                showToast("Graf & Analisis dikemaskini mengikut sesi pilihan anda.", "success");
-            } else {
-                uniqueTopicsLogs = latestLogsDesc; 
+                if (uniqueTopicsLogs.length === 1 && customLogIds) {
+                    smrcSubtextEl.innerText = `Berdasarkan bacaan topik: ${uniqueTopicsLogs[0].topicTitle}`;
+                } else {
+                    smrcSubtextEl.innerText = selectedMonth === "All" ? "Berdasarkan kesemua topik aktif" : `Purata sebutan pada bulan ${formatMonth(selectedMonth)}`;
+                }
             }
 
             let starHTML = "Belum Dinilai";
@@ -6707,32 +6720,7 @@ function renderOverallAnalysis() {
             // HANYA ISYTIHAR SEKALI SAHAJA DI SINI
             let reviewedLogs = allLogsAsc.filter(l => l.isReviewed);
 
-            let avgScore = 0;
-            let avgJeda = 0;
-            let totalStuck = 0;
-            let totalTertinggal = 0;
-            let dominantLevel = 3;
-
-           if (reviewedLogs.length > 0) {
-                avgScore = Math.round(reviewedLogs.reduce((acc, curr) => acc + (curr.manualScore !== null ? curr.manualScore : curr.score), 0) / reviewedLogs.length);
-                avgJeda = reviewedLogs.reduce((acc, curr) => acc + curr.jeda, 0) / reviewedLogs.length;
-                totalStuck = reviewedLogs.reduce((acc, curr) => acc + curr.stuckCount, 0);
-                totalTertinggal = reviewedLogs.reduce((acc, curr) => acc + (curr.tertinggal || 0), 0);
-                dominantLevel = reviewedLogs[reviewedLogs.length - 1].level;
-            }
-            
-            // PENYELESAIAN ISU 1: Logik Tajuk Purata
-            const rcScoreTitleEl = document.getElementById('rc-average-score')?.parentElement?.previousElementSibling;
-            if (rcScoreTitleEl) {
-                rcScoreTitleEl.innerText = reviewedLogs.length > 1 ? "SKOR BACAAN PURATA" : "SKOR BACAAN (KESELURUHAN)";
-            }
-
-            document.getElementById('rc-average-score').innerText = reviewedLogs.length > 0 ? `${avgScore}%` : "Tiada Data";
-            document.getElementById('rc-average-subtext').innerText = selectedMonth === "All" ? "Berdasarkan kesemua topik aktif" : `Purata sebutan pada bulan ${formatMonth(selectedMonth)}`;
-
-            document.getElementById('rc-trend-indicator').innerHTML = calculateTrend(personalLogs, selectedMonth);
-
-            // SENARAI TERKINI -> LAMA UNTUK PAPARAN SEJARAH & KOTAK ANALISIS
+           // SENARAI TERKINI -> LAMA UNTUK PAPARAN SEJARAH & KOTAK ANALISIS
             let latestLogsDesc = [...reviewedLogs].reverse();
             
             let uniqueTopicsLogs = [];
@@ -6741,6 +6729,47 @@ function renderOverallAnalysis() {
                 showToast("Graf & Analisis dikemaskini mengikut sesi pilihan anda.", "success");
             } else {
                 uniqueTopicsLogs = latestLogsDesc; 
+            }
+
+            let avgScore = 0;
+            let avgJeda = 0;
+            let totalStuck = 0;
+            let totalTertinggal = 0;
+            let dominantLevel = 3;
+
+            // KIRA MARKAH BERDASARKAN SENARAI YANG DIPILIH SAHAJA
+            if (uniqueTopicsLogs.length > 0) {
+                avgScore = Math.round(uniqueTopicsLogs.reduce((acc, curr) => acc + (curr.manualScore !== null ? curr.manualScore : curr.score), 0) / uniqueTopicsLogs.length);
+                avgJeda = uniqueTopicsLogs.reduce((acc, curr) => acc + curr.jeda, 0) / uniqueTopicsLogs.length;
+                totalStuck = uniqueTopicsLogs.reduce((acc, curr) => acc + curr.stuckCount, 0);
+                totalTertinggal = uniqueTopicsLogs.reduce((acc, curr) => acc + (curr.tertinggal || 0), 0);
+                dominantLevel = uniqueTopicsLogs[0].level;
+            }
+            
+            // PENYELESAIAN ISU 1: Logik Tajuk Purata & Skor Dinamik
+            const rcScoreTitleEl = document.getElementById('rc-average-score')?.parentElement?.previousElementSibling;
+            if (rcScoreTitleEl) {
+                if (uniqueTopicsLogs.length === 1 && customLogIds) {
+                    rcScoreTitleEl.innerText = `SKOR BACAAN (SESI ${uniqueTopicsLogs[0].sessionNumber})`;
+                } else if (uniqueTopicsLogs.length > 1) {
+                    rcScoreTitleEl.innerText = "SKOR BACAAN PURATA";
+                } else {
+                    rcScoreTitleEl.innerText = "SKOR BACAAN (KESELURUHAN)";
+                }
+            }
+
+            document.getElementById('rc-average-score').innerText = uniqueTopicsLogs.length > 0 ? `${avgScore}%` : "Tiada Data";
+            
+            // Sembunyikan Trend Indicator jika cikgu sedang pilih sesi spesifik
+            document.getElementById('rc-trend-indicator').innerHTML = customLogIds ? "" : calculateTrend(personalLogs, selectedMonth);
+
+            const rcSubtextEl = document.getElementById('rc-average-subtext');
+            if (rcSubtextEl) {
+                if (uniqueTopicsLogs.length === 1 && customLogIds) {
+                    rcSubtextEl.innerText = `Berdasarkan bacaan topik: ${uniqueTopicsLogs[0].topicTitle}`;
+                } else {
+                    rcSubtextEl.innerText = selectedMonth === "All" ? "Berdasarkan kesemua topik aktif" : `Purata sebutan pada bulan ${formatMonth(selectedMonth)}`;
+                }
             }
 
            let starHTML = "Belum Dinilai";
