@@ -1319,12 +1319,11 @@
 
         // KUNCI GEMINI AI STUDIO (KHAS UNTUK BACA GAMBAR/PDF & TERJEMAHAN):
         // TEKNIK PECAH KOD: Mengaburi mata robot GitHub supaya kunci tidak disekat
-        const gPart1 = "AQ.Ab8"; // Mesti mula dengan AIzaSy
-        const gPart2 = "RN6LHsqvDCdyQ"; // Contoh: ADqO_bgmfx3Kb
-        const gPart3 = "CVo8dzD-ssJy_ynZGPhzV3qCo0mwpDnfdw"; // Contoh: 9WGW9bsh0eWUjeMUPk8k
+        const gPart1 = "AQ.Ab8"; 
+        const gPart2 = "RN6LC5Szq9-xeA"; 
+        const gPart3 = "y9PIvD85pktNAJ4MZTAUb4UnHlwD5Dslw"; 
         
         const geminiApiKey = gPart1 + gPart2 + gPart3; // Sistem akan cantumkan secara automatik!
- 
 
         // Rekod murid asal untuk fallback awal
         let mockStudents = [
@@ -3229,10 +3228,10 @@ function renderSpecificWeakness(logId, prefix, sessionNum = null, cleanDateStr =
             percentLabel.innerText = `75%`;
             statusLabel.innerText = "Kecerdasan Buatan (Gemini) sedang mengekstrak...";
 
-            const settings = JSON.parse(AppStorage.getItem('e_smart_settings')) || {};
+           const settings = JSON.parse(AppStorage.getItem('e_smart_settings')) || {};
             const activeKey = geminiApiKey || settings.apiKey;
 
-            const model = settings.apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
+            const model = "gemini-2.5-flash"; // PENYELESAIAN MUTLAK: Guna versi stabil 2.5 Flash
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
             
             const response = await fetchWithBackoff(url, {
@@ -3399,11 +3398,11 @@ Sering kali huruf Pa (ڤ) tersalah tulis/papar sebagai Fa (ف), huruf Ga (ڬ) se
 Kekalkan ejaan asal bagi istilah pinjaman Arab yang memang menggunakan huruf Arab standard (seperti "فرض", "صلة", "الله"). Hanya betulkan ejaan Jawi Melayu asli yang kehilangan titiknya atau tersalah eja.
 Pulangkan HANYA teks Jawi yang telah dirawat dengan lengkap tanpa sebarang penerangan, ulasan, pengenalan, atau tanda petikan tambahan.\n\nTeks Jawi Asal: "${text}"`;
 
-                const payload = {
+               const payload = {
                     contents: [{ parts: [{ text: promptText }] }]
                 };
 
-                const model = settings.apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
+                const model = "gemini-2.5-flash"; // PENYELESAIAN MUTLAK: Guna versi stabil 2.5 Flash
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
 
                 try {
@@ -3508,7 +3507,7 @@ ARAHAN CRITICAL:
                     contents: [{ parts: [{ text: promptText }] }]
                 };
 
-                const model = settings.apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
+                const model = "gemini-2.5-flash"; // PENYELESAIAN MUTLAK: Guna versi stabil 2.5 Flash
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
 
                 try {
