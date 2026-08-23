@@ -2266,36 +2266,27 @@ function populateClassFilters() {
         }
 
        function populateAnalysisTopics() {
-            const selectLevelEl = document.getElementById('analysis-level-select');
-            const selectTopicEl = document.getElementById('analysis-topic-select');
-            if (!selectLevelEl || !selectTopicEl) return;
+            const levelSelect = document.getElementById('analysis-level-select');
+            const topicSelect = document.getElementById('analysis-topic-select');
+            if (!levelSelect || !topicSelect) return;
 
-            const selectedLevel = selectLevelEl.value;
+            const selectedLevel = levelSelect.value;
+            // Gunakan kunci memori Jawi
             const topics = JSON.parse(AppStorage.getItem('e_smart_topics')) || [];
-            const filteredTopics = topics.filter(t => String(t.difficulty) === String(selectedLevel));
+            
+            // PENYELESAIAN MUTLAK: Paksa kedua-dua nilai ditukar kepada 'String' supaya ia dapat dipadankan dengan tepat
+            const filteredTopics = topics.filter(t => String(t.difficulty).trim() === String(selectedLevel).trim());
 
-            selectTopicEl.innerHTML = '<option value="All">Semua Topik Tahap Ini</option>';
-            filteredTopics.forEach(t => {
-                selectTopicEl.innerHTML += `<option value="${t.id}">${t.title}</option>`;
-            });
+            topicSelect.innerHTML = '<option value="All">Semua Topik Tahap Ini</option>';
+            
+            if (filteredTopics.length > 0) {
+                filteredTopics.forEach(t => {
+                    topicSelect.innerHTML += `<option value="${t.id}">${t.title}</option>`;
+                });
+            } else {
+                topicSelect.innerHTML = '<option value="All">Tiada Topik Didaftarkan</option>';
+            }
         }
-
-
-        function populateAnalysisTopics() {
-            const selectLevelEl = document.getElementById('analysis-level-select');
-            const selectTopicEl = document.getElementById('analysis-topic-select');
-            if (!selectLevelEl || !selectTopicEl) return;
-
-            const selectedLevel = selectLevelEl.value;
-            const topics = JSON.parse(localStorage.getItem('e_smart_topics')) || [];
-            const filteredTopics = topics.filter(t => String(t.difficulty) === String(selectedLevel));
-
-            selectTopicEl.innerHTML = '<option value="All">Semua Topik Tahap Ini</option>';
-            filteredTopics.forEach(t => {
-                selectTopicEl.innerHTML += `<option value="${t.id}">${t.title}</option>`;
-            });
-        }
-
 
         function renderStudentTable() {
             const students = JSON.parse(AppStorage.getItem('e_smart_students')) || [];
