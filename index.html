@@ -3971,6 +3971,25 @@ function saveTopic() {
             }
         }
 
+        // PENYELESAIAN MUKTAMAD: Jambatan Pengekstrak Audio Gergasi
+        // Membaca audio dari memori menggunakan ID untuk mengelakkan butang HTML 'crash'
+        function playAudioLog(logId, type) {
+            const logs = JSON.parse(AppStorage.getItem('e_smart_logs')) || [];
+            const log = logs.find(l => String(l.id) === String(logId));
+            
+            if (log) {
+                if (type === 'murid' && log.audioUrl) {
+                    openFloatingAudioPlayer(log.audioUrl);
+                } else if (type === 'guru' && log.audioGuru) {
+                    openFloatingAudioPlayer(log.audioGuru);
+                } else {
+                    showToast("Audio belum direkodkan untuk bahagian ini.", "warning");
+                }
+            } else {
+                showToast("Ralat: Gagal menjumpai fail audio dalam memori pangkalan data.", "error");
+            }
+        }
+
         // --- ENJIN DRAG & DROP UNTUK KOTAK TERAPUNG ---
         setTimeout(() => { dragElement(document.getElementById("floating-audio-widget")); }, 1000);
 
@@ -5119,27 +5138,14 @@ function displayActiveLatihan() {
 
                     const displayScore = l.isReviewed ? `${activeScore}%` : 'N/A';
 
-                  // PENYELESAIAN MUKTAMAD (PILIHAN A): Tag <audio> dibuang kerana disekat oleh Drive CORS.
-                    // Butang Dengar Pintar: Jika Base64, buka pemain terapung. Jika Drive, buka tab baru (Player Google).
-                    let onclickMurid = '';
-                    if (l.audioUrl && l.audioUrl.startsWith('http')) {
-                        let safeUrl = l.audioUrl;
-                        if(safeUrl.includes('uc?export=download&id=')) {
-                            let dId = safeUrl.split('id=')[1];
-                            safeUrl = `https://drive.google.com/file/d/${dId}/view`;
-                        }
-                        onclickMurid = `window.open('${safeUrl}', '_blank')`;
-                    } else {
-                        onclickMurid = `openFloatingAudioPlayer('${l.audioUrl}')`;
-                    }
-
-                    // PENYELESAIAN MUKTAMAD: Pemain Audio Mini (Kalis Tab Baharu)
-                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
-                        ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
+                  // PENYELESAIAN MUKTAMAD: Memanggil data Audio gergasi melalui perantara ID (playAudioLog)
+                    // supaya pelayar web (browser) tidak terbeban/terhenti ketika memuatkan butang ini ke skrin!
+                   const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
+                        ? `<button onclick="event.stopPropagation(); playAudioLog('${l.id}', 'murid')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
                         : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
                         
                     const audioGuruHTML = l.audioGuru && l.audioGuru.trim() !== "" 
-                        ? `<button onclick="openFloatingAudioPlayer('${l.audioGuru}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
+                        ? `<button onclick="event.stopPropagation(); playAudioLog('${l.id}', 'guru')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
                         : ``;
 
                     let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
@@ -6724,26 +6730,14 @@ function renderOverallAnalysis() {
 
                    const displayScore = l.isReviewed ? `${activeScore}%` : 'N/A';
 
-                   // PENYELESAIAN MUKTAMAD (PILIHAN A): Tag <audio> dibuang kerana disekat oleh Drive CORS.
-                    let onclickMurid = '';
-                    if (l.audioUrl && l.audioUrl.startsWith('http')) {
-                        let safeUrl = l.audioUrl;
-                        if(safeUrl.includes('uc?export=download&id=')) {
-                            let dId = safeUrl.split('id=')[1];
-                            safeUrl = `https://drive.google.com/file/d/${dId}/view`;
-                        }
-                        onclickMurid = `window.open('${safeUrl}', '_blank')`;
-                    } else {
-                        onclickMurid = `openFloatingAudioPlayer('${l.audioUrl}')`;
-                    }
-
-                    // PENYELESAIAN MUKTAMAD: Pemain Audio Mini (Kalis Tab Baharu)
+                   // PENYELESAIAN MUKTAMAD: Memanggil data Audio gergasi melalui perantara ID (playAudioLog)
+                    // supaya pelayar web (browser) tidak terbeban/terhenti ketika memuatkan butang ini ke skrin!
                    const audioPlayerHTML = l.audioUrl && l.audioUrl.trim() !== ""
-                        ? `<button onclick="openFloatingAudioPlayer('${l.audioUrl}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
+                        ? `<button onclick="event.stopPropagation(); playAudioLog('${l.id}', 'murid')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-emerald-200"><i class="fa-solid fa-play"></i> Dengar</button>` 
                         : `<span class="text-[10px] text-slate-400 italic">Tiada audio murid</span>`;
                         
                     const audioGuruHTML = l.audioGuru && l.audioGuru.trim() !== "" 
-                        ? `<button onclick="openFloatingAudioPlayer('${l.audioGuru}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
+                        ? `<button onclick="event.stopPropagation(); playAudioLog('${l.id}', 'guru')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200 ml-2" title="Maklum Balas Suara Guru"><i class="fa-solid fa-headset"></i> Guru</button>` 
                         : ``;
 
                     let cleanDate = l.date ? String(l.date).replace(/^'/, '') : "";
