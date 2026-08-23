@@ -1714,6 +1714,7 @@ async function muatTurunDataMuridDariSheet() {
         console.error("Gagal menyegerakkan CSV Murid:", error);
     }
 }
+
 // FASA 2 BAHARU: Fungsi Pembantu untuk mendarat & memanggil data guru pentadbir dari Google Sheet (GUNA CSV)
 async function muatTurunDataGuruDariSheet() {
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQrz57ZMy_TSgTSgN7RXi4x8NDkkH4IcjwdM0UzSS3gK90L2jW7jXp0b-boPCp-Rqg-HNzH1zsFGqD9/pub?gid=0&single=true&output=csv";
@@ -3103,10 +3104,40 @@ function renderSpecificWeakness(logId, prefix, sessionNum = null, cleanDateStr =
             if (titleEl) titleEl.innerText = "Analisis Kelemahan & Cadangan Fokus";
 
             if(focusText) {
-                // Sembunyikan notis "Menunjukkan kesalahan khusus..." dari UI sepenuhnya
-                const parentDiv = focusText.parentElement;
-                if (parentDiv) parentDiv.style.display = 'none';
+                // Sembunyikan label lama
+                const labelElement = focusText.parentElement.querySelector('span.uppercase');
+                if (labelElement) labelElement.style.display = 'none';
+                
+                focusText.innerHTML = `<div class="text-[10px] text-slate-500 bg-slate-100 p-2 rounded-lg border border-slate-200 text-center mt-2">Menunjukkan kesalahan khusus bagi sesi pilihan sahaja. <button onclick="${returnFunc}" class="text-emerald-600 underline font-bold cursor-pointer hover:text-emerald-800 ml-1">Tunjukkan Keseluruhan</button></div>`;
             }
+
+            // =================================================================
+            // PENYELESAIAN ISU 2: KEMAS KINI KOTAK SKOR & BINTANG SECARA LIVE
+            // =================================================================
+            const activeScore = log.manualScore !== null ? log.manualScore : log.score;
+            
+            const scoreValEl = document.getElementById(`${prefix}-average-score`);
+            const scoreTitleEl = scoreValEl ? scoreValEl.parentElement.previousElementSibling : null;
+            const scoreSubtextEl = document.getElementById(`${prefix}-average-subtext`);
+            const trendEl = document.getElementById(`${prefix}-trend-indicator`);
+            const statusBadge = document.getElementById(`${prefix}-overall-status-badge`);
+            
+            if (scoreValEl) scoreValEl.innerText = `${activeScore}%`;
+            if (scoreTitleEl) scoreTitleEl.innerText = `SKOR BACAAN (SESI ${sessionNum || 'AKTIF'})`;
+            if (scoreSubtextEl) scoreSubtextEl.innerText = `Berdasarkan bacaan topik: ${t ? t.title : 'Pilihan'}`;
+            if (trendEl) trendEl.innerHTML = ""; // Kosongkan trend bila tengok 1 rekod supaya tak keliru
+            
+            // Kira Semula Bintang secara "Live" mengikut Skala 5 Tier
+            let starHTML = "Belum Dinilai";
+            if (log.isReviewed) {
+                if (activeScore >= 80) starHTML = "⭐⭐⭐⭐⭐";
+                else if (activeScore >= 65) starHTML = "⭐⭐⭐⭐";
+                else if (activeScore >= 50) starHTML = "⭐⭐⭐";
+                else if (activeScore >= 30) starHTML = "⭐⭐";
+                else starHTML = "⭐";
+            }
+            if (statusBadge) statusBadge.innerText = starHTML;
+            // =================================================================
 
             const activeChart = prefix === 'smrc' ? studentChartInstance : chartInstance;
             if (activeChart && activeChart.data.customIds) {
@@ -5059,15 +5090,28 @@ function displayActiveLatihan() {
             let totalTertinggal = 0;
             let dominantLevel = 3;
 
-            if (reviewedLogs.length > 0) {
+          if (reviewedLogs.length > 0) {
                 avgScore = Math.round(reviewedLogs.reduce((acc, curr) => acc + (curr.manualScore !== null ? curr.manualScore : curr.score), 0) / reviewedLogs.length);
                 avgJeda = reviewedLogs.reduce((acc, curr) => acc + curr.jeda, 0) / reviewedLogs.length;
                 totalStuck = reviewedLogs.reduce((acc, curr) => acc + curr.stuckCount, 0);
                 totalTertinggal = reviewedLogs.reduce((acc, curr) => acc + (curr.tertinggal || 0), 0);
                 dominantLevel = reviewedLogs[reviewedLogs.length - 1].level;
             }
-            document.getElementById('smrc-average-score').innerText = reviewedLogs.length > 0 ? `${avgScore}%` : "Tiada Data";
+            
+            // PENYELESAIAN ISU 1: Logik Tajuk Purata
+            const smrcScoreTitleEl = document.getElementById('smrc-average-score')?.parentElement?.previousElementSibling;
+            if (smrcScoreTitleEl) {
+                smrcScoreTitleEl.innerText = reviewedLogs.length > 1 ? "SKOR BACAAN PURATA" : "SKOR BACAAN (KESELURUHAN)";
+            }
+
+            document.getElementById('smrc-average-score').innerText = reviewedLogs.length > 0 ? `${avgScore}%` : "N/A";
             document.getElementById('smrc-trend-indicator').innerHTML = calculateTrend(personalLogs, selectedMonth);
+            
+            // Mengembalikan teks sub-keterangan asal jika cikgu tekan "Tunjuk Keseluruhan"
+            const smrcSubtextEl = document.getElementById('smrc-average-subtext');
+            if (smrcSubtextEl) {
+                smrcSubtextEl.innerText = selectedMonth === "All" ? "Berdasarkan kesemua topik aktif" : `Purata sebutan pada bulan ${formatMonth(selectedMonth)}`;
+            }
 
             // SENARAI TERKINI -> LAMA UNTUK PAPARAN SEJARAH & KOTAK ANALISIS
             let latestLogsDesc = [...reviewedLogs].reverse();
@@ -5081,19 +5125,39 @@ function displayActiveLatihan() {
             }
 
             let starHTML = "Belum Dinilai";
+            let badgeClass = 'bg-slate-100 text-slate-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-slate-200';
+            
             let top3Logs = latestLogsDesc.slice(0, 3);
             if (top3Logs.length > 0) {
                 let sumScore = top3Logs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
                 let uniqueAvg = Math.round(sumScore / top3Logs.length);
-                if (uniqueAvg >= 80) starHTML = "⭐⭐⭐⭐⭐";
-                else if (uniqueAvg >= 50) starHTML = "⭐⭐⭐";
-                else starHTML = "⭐⭐";
+                
+                if (uniqueAvg >= 80) {
+                    starHTML = "⭐⭐⭐⭐⭐ Cemerlang";
+                    badgeClass = 'bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-emerald-200';
+                }
+                else if (uniqueAvg >= 65) {
+                    starHTML = "⭐⭐⭐⭐ Kepujian";
+                    badgeClass = 'bg-blue-100 text-blue-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-blue-200';
+                }
+                else if (uniqueAvg >= 50) {
+                    starHTML = "⭐⭐⭐ Sederhana";
+                    badgeClass = 'bg-amber-100 text-amber-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-amber-200';
+                }
+                else if (uniqueAvg >= 30) {
+                    starHTML = "⭐⭐ Lemah";
+                    badgeClass = 'bg-orange-100 text-orange-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-orange-200';
+                }
+                else {
+                    starHTML = "⭐ Kritis";
+                    badgeClass = 'bg-rose-100 text-rose-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-rose-200';
+                }
             }
 
             const statusInfo = evaluateReadingStatus(avgScore, avgJeda, totalStuck, totalTertinggal, dominantLevel);
-            const statusBadge = document.getElementById('smrc-overall-status-badge');
+            const statusBadge = document.getElementById('rc-overall-status-badge');
             statusBadge.innerText = starHTML;
-            statusBadge.className = 'text-xl sm:text-2xl tracking-widest self-center sm:self-start whitespace-nowrap';
+            statusBadge.className = badgeClass;
 
             const activeTopics = JSON.parse(AppStorage.getItem('e_smart_topics')) || [];
             const allTopicsCompleted = activeTopics.length > 0 && activeTopics.every(t => personalLogs.some(l => String(l.topicId) === String(t.id) && l.isReviewed));
@@ -6649,13 +6713,20 @@ function renderOverallAnalysis() {
             let totalTertinggal = 0;
             let dominantLevel = 3;
 
-            if (reviewedLogs.length > 0) {
+           if (reviewedLogs.length > 0) {
                 avgScore = Math.round(reviewedLogs.reduce((acc, curr) => acc + (curr.manualScore !== null ? curr.manualScore : curr.score), 0) / reviewedLogs.length);
                 avgJeda = reviewedLogs.reduce((acc, curr) => acc + curr.jeda, 0) / reviewedLogs.length;
                 totalStuck = reviewedLogs.reduce((acc, curr) => acc + curr.stuckCount, 0);
                 totalTertinggal = reviewedLogs.reduce((acc, curr) => acc + (curr.tertinggal || 0), 0);
                 dominantLevel = reviewedLogs[reviewedLogs.length - 1].level;
             }
+            
+            // PENYELESAIAN ISU 1: Logik Tajuk Purata
+            const rcScoreTitleEl = document.getElementById('rc-average-score')?.parentElement?.previousElementSibling;
+            if (rcScoreTitleEl) {
+                rcScoreTitleEl.innerText = reviewedLogs.length > 1 ? "SKOR BACAAN PURATA" : "SKOR BACAAN (KESELURUHAN)";
+            }
+
             document.getElementById('rc-average-score').innerText = reviewedLogs.length > 0 ? `${avgScore}%` : "Tiada Data";
             document.getElementById('rc-average-subtext').innerText = selectedMonth === "All" ? "Berdasarkan kesemua topik aktif" : `Purata sebutan pada bulan ${formatMonth(selectedMonth)}`;
 
@@ -6672,20 +6743,40 @@ function renderOverallAnalysis() {
                 uniqueTopicsLogs = latestLogsDesc; 
             }
 
-            let starHTML = "Belum Dinilai";
+           let starHTML = "Belum Dinilai";
+            let badgeClass = 'bg-slate-100 text-slate-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-slate-200';
+            
             let top3Logs = latestLogsDesc.slice(0, 3);
             if (top3Logs.length > 0) {
                 let sumScore = top3Logs.reduce((acc, l) => acc + (l.manualScore !== null ? l.manualScore : l.score), 0);
                 let uniqueAvg = Math.round(sumScore / top3Logs.length);
-                if (uniqueAvg >= 80) starHTML = "⭐⭐⭐⭐⭐";
-                else if (uniqueAvg >= 50) starHTML = "⭐⭐⭐";
-                else starHTML = "⭐⭐";
+                
+                if (uniqueAvg >= 80) {
+                    starHTML = "⭐⭐⭐⭐⭐ Cemerlang";
+                    badgeClass = 'bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-emerald-200';
+                }
+                else if (uniqueAvg >= 65) {
+                    starHTML = "⭐⭐⭐⭐ Kepujian";
+                    badgeClass = 'bg-blue-100 text-blue-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-blue-200';
+                }
+                else if (uniqueAvg >= 50) {
+                    starHTML = "⭐⭐⭐ Sederhana";
+                    badgeClass = 'bg-amber-100 text-amber-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-amber-200';
+                }
+                else if (uniqueAvg >= 30) {
+                    starHTML = "⭐⭐ Lemah";
+                    badgeClass = 'bg-orange-100 text-orange-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-orange-200';
+                }
+                else {
+                    starHTML = "⭐ Kritis";
+                    badgeClass = 'bg-rose-100 text-rose-800 text-[11px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider self-center sm:self-start whitespace-nowrap shadow-sm border border-rose-200';
+                }
             }
 
             const statusInfo = evaluateReadingStatus(avgScore, avgJeda, totalStuck, totalTertinggal, dominantLevel);
-            const statusBadge = document.getElementById('rc-overall-status-badge');
+            const statusBadge = document.getElementById('smrc-overall-status-badge');
             statusBadge.innerText = starHTML;
-            statusBadge.className = 'text-xl sm:text-2xl tracking-widest self-center sm:self-start whitespace-nowrap';
+            statusBadge.className = badgeClass;
 
             const activeTopics = JSON.parse(AppStorage.getItem('e_smart_topics')) || [];
             const allTopicsCompleted = activeTopics.length > 0 && activeTopics.every(t => personalLogs.some(l => String(l.topicId) === String(t.id) && l.isReviewed));
