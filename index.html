@@ -1354,7 +1354,7 @@ let systemSettings = {
     apiKey: "", // DIKOSONGKAN UNTUK KESELAMATAN GITHUB (Sistem akan guna kod pecahan di atas)
     audioApi: "846549736afba9a0f621a2f62d387e8f0d7600a48902bfff1b7d5dff73024697",
     voiceId: "21m00Tcm4TlvDq8ikWAM",
-    gasUrl: "https://script.google.com/macros/s/AKfycbyoxkx4fEUTCsKVHHuyuD_gG2FVUxRuGwKmJ72Qe-c2bHcbbP-bg4zg4T4hHBo6Tr5Seg/exec"
+    gasUrl: "https://script.google.com/macros/s/AKfycbwdlZXo54iyYwNP0loeFxoZefR_RivkiRi0wSu4PAnEpwcizrrmm-zhhkLXVFeYxVRjYg/exec"
 };
 
         // Pemboleh ubah keadaan (State Variables)
@@ -2127,7 +2127,7 @@ async function muatTurunSkorDariSheet() {
         /* ==========================================================================
            5. DATA PROFILE MANAGEMENT (CRUD - GURU & MURID)
            ========================================================================== */
-      function previewAvatar(input, imgId) {
+        function previewAvatar(input, imgId) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 
@@ -2135,10 +2135,10 @@ async function muatTurunSkorDariSheet() {
                 reader.onload = function(e) {
                     const img = new Image();
                     img.onload = function() {
-                        // ENJIN PEMAMPATAN KUALITI TINGGI (HD - MAX 800px)
+                        // ENJIN PEMAMPATAN KUALITI TINGGI (JELAS & TAJAM)
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
+                        const MAX_WIDTH = 400; // Saiz dibesarkan dari 150px ke 400px
+                        const MAX_HEIGHT = 400;
                         
                         let width = img.width;
                         let height = img.height;
@@ -2159,16 +2159,16 @@ async function muatTurunSkorDariSheet() {
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         
-                        // Latar putih
+                        // Latar putih (Format JPEG)
                         ctx.fillStyle = "#ffffff";
                         ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Mampat ke JPEG kualiti 95% (Untuk kualiti jernih ke Google Drive)
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.95);
+                        // Mampat ke JPEG kualiti 85% supaya jelas, tapi masih cuba mematuhi saiz selamat Google Sheet
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
                         
                         document.getElementById(imgId).src = compressedBase64;
-                        showToast("Gambar sedia untuk dimuat naik ke Google Drive!", "success");
+                        showToast("Gambar kualiti tinggi berjaya dimuatkan!", "success");
                     };
                     img.src = e.target.result;
                 };
