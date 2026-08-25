@@ -1603,41 +1603,18 @@ window.onload = async function() {
     if (document.getElementById('guru-email')) document.getElementById('guru-email').value = guru.email || "";
 
     // =========================================================================
-    // KUNCI KEBAL 5 MINIT & PENYEGERAKAN BERATUR (QUEUE BACKGROUND SYNC)
+    // PENYEGERAKAN BERATUR (LIVE SYNC) - MANGGA 5 MINIT TELAH DIBUANG
     // =========================================================================
-    const now = Date.now();
-    const LOCK_DURATION = 300000; // 5 Minit
-    
-    // PUNCA MASALAH: Sebelum ini 4 request dihantar serentak menyebabkan pelayan Google
-    // menyekat aplikasi (sekejap dapat, sekejap kosong).
-    // PENYELESAIAN: Aplikasi buka serta-merta menggunakan cache IndexedDB.
-    // Selepas 1.5 saat, ia memuat turun data baru dari Google secara 'beratur' (satu persatu).
+    // PENYELESAIAN: Semua jadual ditarik secara "Live" beratur supaya perubahan 
+    // di peranti lain (seperti gambar) terus dikemaskini tanpa perlu 'clear history'.
     setTimeout(async () => {
         try {
-            if (now - parseInt(AppStorage.getItem('sync_lock_murid') || "0") >= LOCK_DURATION) {
-                await muatTurunDataMuridDariSheet();
-                AppStorage.setItem('sync_lock_murid', Date.now().toString()); // Kunci diaktifkan selepas selesai
-            }
-            if (now - parseInt(AppStorage.getItem('sync_lock_guru') || "0") >= LOCK_DURATION) {
-                await muatTurunDataGuruDariSheet();
-                AppStorage.setItem('sync_lock_guru', Date.now().toString());
-            }
-            
-            // =============================================================
-            // KOD YANG TERTINGGAL SEBELUM INI: ARAHAN MENARIK TOPIK
-            // =============================================================
-            if (now - parseInt(AppStorage.getItem('sync_lock_topik') || "0") >= LOCK_DURATION) {
-                await muatTurunTopicsDariSheet();
-                AppStorage.setItem('sync_lock_topik', Date.now().toString());
-            }
-            // =============================================================
-
-            // PENYELESAIAN MUTLAK: Buang mangga (lock) 5 minit untuk Skor Latihan.
-            // Skor mesti ditarik secara "Live" setiap kali portal dibuka atau di-refresh!
+            await muatTurunDataMuridDariSheet();
+            await muatTurunDataGuruDariSheet();
+            await muatTurunTopicsDariSheet();
             await muatTurunSkorDariSheet();
-            AppStorage.setItem('sync_lock_skor', Date.now().toString());
             
-            console.log("✅ Penyegerakan awan stabil. Semua selesai disemak di latar belakang.");
+            console.log("✅ Penyegerakan awan LIVE stabil. Semua data terkini selesai ditarik.");
 
         } catch (e) {
             console.warn("Gagal menghubungi awan. Sistem terus menggunakan data selamat lokal:", e);
