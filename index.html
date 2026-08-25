@@ -1354,7 +1354,7 @@ let systemSettings = {
     apiKey: "", // DIKOSONGKAN UNTUK KESELAMATAN GITHUB (Sistem akan guna kod pecahan di atas)
     audioApi: "846549736afba9a0f621a2f62d387e8f0d7600a48902bfff1b7d5dff73024697",
     voiceId: "21m00Tcm4TlvDq8ikWAM",
-    gasUrl: "https://script.google.com/macros/s/AKfycbwdlZXo54iyYwNP0loeFxoZefR_RivkiRi0wSu4PAnEpwcizrrmm-zhhkLXVFeYxVRjYg/exec"
+    gasUrl: "https://script.google.com/macros/s/AKfycbze45PzebRXLmtAghrZfbwG5zBd-46glTLUhjq9-0PiTSUlBuCndm2Ikb7qb-7nP2zCPg/exec"
 };
 
         // Pemboleh ubah keadaan (State Variables)
@@ -1603,18 +1603,41 @@ window.onload = async function() {
     if (document.getElementById('guru-email')) document.getElementById('guru-email').value = guru.email || "";
 
     // =========================================================================
-    // PENYEGERAKAN BERATUR (LIVE SYNC) - MANGGA 5 MINIT TELAH DIBUANG
+    // KUNCI KEBAL 5 MINIT & PENYEGERAKAN BERATUR (QUEUE BACKGROUND SYNC)
     // =========================================================================
-    // PENYELESAIAN: Semua jadual ditarik secara "Live" beratur supaya perubahan 
-    // di peranti lain (seperti gambar) terus dikemaskini tanpa perlu 'clear history'.
+    const now = Date.now();
+    const LOCK_DURATION = 300000; // 5 Minit
+    
+    // PUNCA MASALAH: Sebelum ini 4 request dihantar serentak menyebabkan pelayan Google
+    // menyekat aplikasi (sekejap dapat, sekejap kosong).
+    // PENYELESAIAN: Aplikasi buka serta-merta menggunakan cache IndexedDB.
+    // Selepas 1.5 saat, ia memuat turun data baru dari Google secara 'beratur' (satu persatu).
     setTimeout(async () => {
         try {
-            await muatTurunDataMuridDariSheet();
-            await muatTurunDataGuruDariSheet();
-            await muatTurunTopicsDariSheet();
-            await muatTurunSkorDariSheet();
+            if (now - parseInt(AppStorage.getItem('sync_lock_murid') || "0") >= LOCK_DURATION) {
+                await muatTurunDataMuridDariSheet();
+                AppStorage.setItem('sync_lock_murid', Date.now().toString()); // Kunci diaktifkan selepas selesai
+            }
+            if (now - parseInt(AppStorage.getItem('sync_lock_guru') || "0") >= LOCK_DURATION) {
+                await muatTurunDataGuruDariSheet();
+                AppStorage.setItem('sync_lock_guru', Date.now().toString());
+            }
             
-            console.log("✅ Penyegerakan awan LIVE stabil. Semua data terkini selesai ditarik.");
+            // =============================================================
+            // KOD YANG TERTINGGAL SEBELUM INI: ARAHAN MENARIK TOPIK
+            // =============================================================
+            if (now - parseInt(AppStorage.getItem('sync_lock_topik') || "0") >= LOCK_DURATION) {
+                await muatTurunTopicsDariSheet();
+                AppStorage.setItem('sync_lock_topik', Date.now().toString());
+            }
+            // =============================================================
+
+            // PENYELESAIAN MUTLAK: Buang mangga (lock) 5 minit untuk Skor Latihan.
+            // Skor mesti ditarik secara "Live" setiap kali portal dibuka atau di-refresh!
+            await muatTurunSkorDariSheet();
+            AppStorage.setItem('sync_lock_skor', Date.now().toString());
+            
+            console.log("✅ Penyegerakan awan stabil. Semua selesai disemak di latar belakang.");
 
         } catch (e) {
             console.warn("Gagal menghubungi awan. Sistem terus menggunakan data selamat lokal:", e);
@@ -2112,10 +2135,10 @@ async function muatTurunSkorDariSheet() {
                 reader.onload = function(e) {
                     const img = new Image();
                     img.onload = function() {
-                        // ENJIN PEMAMPATAN KUALITI TINGGI (JELAS & TAJAM)
+                        // ENJIN PEMAMPATAN SUPER KECIL (MAX 150px)
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 400; // Saiz dibesarkan dari 150px ke 400px
-                        const MAX_HEIGHT = 400;
+                        const MAX_WIDTH = 150;
+                        const MAX_HEIGHT = 150;
                         
                         let width = img.width;
                         let height = img.height;
@@ -2136,16 +2159,16 @@ async function muatTurunSkorDariSheet() {
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         
-                        // Latar putih (Format JPEG)
+                        // Latar putih (Format JPEG sangat kecil saiznya)
                         ctx.fillStyle = "#ffffff";
                         ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Mampat ke JPEG kualiti 85% supaya jelas, tapi masih cuba mematuhi saiz selamat Google Sheet
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                        // Mampat ke JPEG kualiti 60% (Sangat selamat untuk limit 50k karakter Google Sheet)
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
                         
                         document.getElementById(imgId).src = compressedBase64;
-                        showToast("Gambar kualiti tinggi berjaya dimuatkan!", "success");
+                        showToast("Gambar berjaya dimampatkan secara automatik!", "success");
                     };
                     img.src = e.target.result;
                 };
