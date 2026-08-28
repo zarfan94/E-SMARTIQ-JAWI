@@ -1352,7 +1352,7 @@
     // Konfigurasi API - Sila letakkan URL GAS anda secara tetap di sini!
 let systemSettings = {
     apiKey: "", // DIKOSONGKAN UNTUK KESELAMATAN GITHUB (Sistem akan guna kod pecahan di atas)
-    audioApi: "846549736afba9a0f621a2f62d387e8f0d7600a48902bfff1b7d5dff73024697",
+    audioApi: "sk_828342e52b7dc757198944215f7d8fddf64eab940e7edc3f",
     voiceId: "vRaj2Gd0mefB1EU96ua2", // KOD BAHARU: ID Suara Cikgu Diselaraskan
     gasUrl: "https://script.google.com/macros/s/AKfycbze45PzebRXLmtAghrZfbwG5zBd-46glTLUhjq9-0PiTSUlBuCndm2Ikb7qb-7nP2zCPg/exec"
 };
@@ -5685,10 +5685,9 @@ function displayActiveLatihan() {
             let charIndexToWordIndex = []; 
 
             if (Array.isArray(inputData)) {
-                let skipNext = false; // Penanda untuk mengawal "Pengimbas Wasal"
+                let skipNext = false; 
                 
                 for (let idx = 0; idx < inputData.length; idx++) {
-                    // Jika perkataan ini telah diserap oleh perkataan sebelumnya, langkau.
                     if (skipNext) {
                         skipNext = false;
                         continue;
@@ -5697,25 +5696,20 @@ function displayActiveLatihan() {
                     let word = inputData[idx];
                     let nextWord = inputData[idx + 1] || "";
                     let modifiedWord = word;
-                    let isWasal = false; // Penanda pemotongan kelipan dua butang
+                    let isWasal = false; 
 
-                    // =================================================================
-                    // PENGIMBAS WASAL (LIAISON SCANNER): Cantuman Perkataan Terpisah
-                    // =================================================================
                     let cleanCurrent = word.toLowerCase().replace(/[.,]/g, "").trim();
                     let cleanNext = nextWord.toLowerCase().replace(/[.,]/g, "").trim();
                     
                     if (cleanCurrent === "warahmatu" && cleanNext === "allah") {
                         modifiedWord = "warahmatullah";
-                        isWasal = true;
-                        skipNext = true; 
+                        isWasal = true; skipNext = true; 
                         if (nextWord.includes(',')) modifiedWord += ", ... ";
                         if (nextWord.includes('.')) modifiedWord += ". ... ";
                     } 
                     else if (cleanCurrent === "warahmatu" && cleanNext === "allahi") {
                         modifiedWord = "warahmatullahi";
-                        isWasal = true;
-                        skipNext = true;
+                        isWasal = true; skipNext = true;
                         if (nextWord.includes(',')) modifiedWord += ", ... ";
                         if (nextWord.includes('.')) modifiedWord += ". ... ";
                     }
@@ -5738,54 +5732,38 @@ function displayActiveLatihan() {
                         if (nextWord.includes('.')) modifiedWord += ". ... ";
                     }
                     else {
-                        // RAWATAN MAKHRAJ & JEDA ELEVENLABS KHAS (Kekal Asal)
                         modifiedWord = modifiedWord.replace(/wa\s*rahmatul\s*lah/gi, "warahmatullah");
                         modifiedWord = modifiedWord.replace(/warah\s*matul\s*lah/gi, "warahmatullah");
                         modifiedWord = modifiedWord.replace(/wa\s+barokatuh/gi, "wabarakatuh");
                         modifiedWord = modifiedWord.replace(/wa\s+barakatuh/gi, "wabarakatuh");
                         modifiedWord = modifiedWord.replace(/mughall?azah/gi, "مُغَلَّظَة");
-                        
                         modifiedWord = modifiedWord.replace(/-/g, "");
-                        
-                          modifiedWord = modifiedWord.replace(/\btaifah\b/gi, "ta-ifah");
-                    modifiedWord = modifiedWord.replace(/\bfajar\b/gi, "fa-jar");
-                    modifiedWord = modifiedWord.replace(/\bmudir\b/gi, "mu-dir");
-                    modifiedWord = modifiedWord.replace(/\bisytihar\b/gi, "ish-tihar");
-                    modifiedWord = modifiedWord.replace(/\bdam\b/gi, "daam");
-                    modifiedWord = modifiedWord.replace(/\bsah\b/gi, "صَحْ");
+                        modifiedWord = modifiedWord.replace(/\btaifah\b/gi, "ta-ifah");
+                        modifiedWord = modifiedWord.replace(/\bfajar\b/gi, "fa-jar");
+                        modifiedWord = modifiedWord.replace(/\bmudir\b/gi, "mu-dir");
+                        modifiedWord = modifiedWord.replace(/\bisytihar\b/gi, "ish-tihar");
+                        modifiedWord = modifiedWord.replace(/\bdam\b/gi, "daam");
+                        modifiedWord = modifiedWord.replace(/\bsah\b/gi, "صَحْ");
                     
-                    // Paksa Jeda ke dalam struktur teks ElevenLabs tanpa merosakkan indeks butang;
-
-                        
-                        // Paksa Jeda ke dalam struktur teks ElevenLabs tanpa merosakkan indeks butang
                         if (modifiedWord.includes(',')) modifiedWord = modifiedWord.replace(/,/g, ", ... ");
                         if (modifiedWord.includes('.')) modifiedWord = modifiedWord.replace(/\./g, ". ... ");
                     }
 
-                    // Bina pemetaan huruf (character) kepada butang indeks (word) di skrin
                     let startChar = promptText.length;
                     promptText += modifiedWord + " ";
                     let endChar = promptText.length;
 
                     if (isWasal) {
-                        // Jika Wasal, bahagikan masa kelipan sama rata (Separuh Butang 1, Separuh Butang 2)
                         let midPoint = Math.floor((startChar + endChar) / 2);
-                        for (let i = startChar; i < midPoint; i++) {
-                            charIndexToWordIndex[i] = idx;       
-                        }
-                        for (let i = midPoint; i < endChar; i++) {
-                            charIndexToWordIndex[i] = idx + 1;   
-                        }
+                        for (let i = startChar; i < midPoint; i++) charIndexToWordIndex[i] = idx;       
+                        for (let i = midPoint; i < endChar; i++) charIndexToWordIndex[i] = idx + 1;   
                     } else {
-                        // Jika normal, seluruh perkataan milik butang semasa
-                        for (let i = startChar; i < endChar; i++) {
-                            charIndexToWordIndex[i] = idx;
-                        }
+                        for (let i = startChar; i < endChar; i++) charIndexToWordIndex[i] = idx;
                     }
                 }
                 promptText = promptText.trim();
-           } else {
-                promptText = inputData; // Sokongan untuk mod klik butang tunggal
+            } else {
+                promptText = inputData; 
             }
 
             // KOD PENYELAMAT MUTLAK: Halang ralat 400 Bad Request jika teks kosong dihantar
@@ -5800,20 +5778,17 @@ function displayActiveLatihan() {
                 return;
             }
 
-             const apiUrl = isSync 
+            const apiUrl = isSync 
                 ? `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`
                 : `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
 
+            // KOD DIBETULKAN: Buang voice_settings sepenuhnya untuk elak 400 Bad Request
             const payload = {
                 text: promptText,
                 model_id: "eleven_multilingual_v2"
             };
 
             try {
-                // =========================================================================
-                // PENYELESAIAN BANK MEMORI AUDIO (MENGHALANG PEMBAZIRAN KREDIT ELEVENLABS)
-                // =========================================================================
-                // Cipta "Kunci Unik" berdasarkan teks yang dibaca menggunakan Hash Matematik
                 let hash = 0;
                 for (let i = 0; i < promptText.length; i++) {
                     const char = promptText.charCodeAt(i);
@@ -5825,11 +5800,9 @@ function displayActiveLatihan() {
                 let audioUrl;
                 let alignmentData = null;
                 
-                // Semak Bank Memori IndexedDB (Lokal Telefon/Laptop)
                 const cachedData = await idb.get(cacheKey);
 
                 if (cachedData) {
-                    // FAIL DIJUMPAI: Guna fail lama (Jimat kredit & Lebih Laju!)
                     console.log("♻️ [Bank Memori Aktif] Menggunakan audio tersimpan secara percuma!");
                     const parsedCache = JSON.parse(cachedData);
                     
@@ -5843,7 +5816,6 @@ function displayActiveLatihan() {
                     }
                 } 
                 else {
-                    // FAIL TIDAK DIJUMPAI: Ketuk pintu pelayan ElevenLabs (Kredit Ditolak)
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 
@@ -5853,7 +5825,12 @@ function displayActiveLatihan() {
                         body: JSON.stringify(payload)
                     });
                     
-                    if (!response.ok) throw new Error(`Ralat API ElevenLabs`);
+                    if (!response.ok) {
+                        // KOD BARU: TANGKAP MESEJ RALAT SEBENAR DARI ELEVENLABS
+                        const errData = await response.json().catch(() => ({}));
+                        const detailMsg = errData.detail ? (errData.detail.message || JSON.stringify(errData.detail)) : response.status;
+                        throw new Error(`[Detail]: ${detailMsg}`);
+                    }
 
                     if (isSync) {
                         const result = await response.json();
@@ -5863,7 +5840,6 @@ function displayActiveLatihan() {
                         audioUrl = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }));
                         alignmentData = result.alignment;
                         
-                        // Simpan fail Audio ke Bank Memori untuk kegunaan masa depan
                         idb.set(cacheKey, JSON.stringify({
                             audio_base64: result.audio_base64,
                             alignment: result.alignment
@@ -5872,7 +5848,6 @@ function displayActiveLatihan() {
                         const blob = await response.blob();
                         audioUrl = URL.createObjectURL(blob);
                         
-                        // Tukar blob kepada base64 dan Simpan ke Bank Memori
                         const reader = new FileReader();
                         reader.readAsDataURL(blob);
                         reader.onloadend = function() {
@@ -5884,13 +5859,10 @@ function displayActiveLatihan() {
                         }
                     }
                 }
-                // =========================================================================
                 
                 const audio = new Audio(audioUrl);
                 audio.playbackRate = speed;
 
-
-                
                 if (isSync && alignmentData && alignmentData.characters) {
                     audio.ontimeupdate = () => {
                         const absTime = audio.currentTime;
@@ -5904,7 +5876,6 @@ function displayActiveLatihan() {
                             }
                         }
                         
-                        // Gunakan Jambatan Pemetaan untuk kelipan yang sangat tepat dan mustahil melompat
                         if (activeCharIndex !== -1 && charIndexToWordIndex[activeCharIndex] !== undefined) {
                             highlightWordInBoard(charIndexToWordIndex[activeCharIndex]);
                         }
@@ -5916,7 +5887,7 @@ function displayActiveLatihan() {
                 
             } catch (err) {
                 console.error("Premium ElevenLabs TTS Error: ", err);
-                showToast("Sokongan suara premium terputus. Menggunakan audio peranti sedia ada.", "error");
+                showToast("Ralat API ElevenLabs: " + err.message, "error");
                 fallbackStandardTTS(promptText, speed, isSync);
             }
         }
