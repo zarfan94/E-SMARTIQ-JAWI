@@ -5675,8 +5675,10 @@ function displayActiveLatihan() {
 
         async function executePremiumTTS(inputData, speed, isSync = false) {
             const settings = JSON.parse(AppStorage.getItem('e_smart_settings')) || {};
-            const elevenLabsApiKey = settings.audioApi;
-            const voiceId = settings.voiceId || "Zephyr";
+            
+            // PAKSA GUNA KUNCI DALAM KOD: Abaikan kunci memori lama yang salah
+            const elevenLabsApiKey = systemSettings.audioApi || settings.audioApi;
+            const voiceId = systemSettings.voiceId || settings.voiceId || "Zephyr";
 
             // JAMBATAN PEMETAAN KELIPAN: Menyimpan indeks tepat butang di skrin secara mutlak
             let promptText = "";
@@ -5846,7 +5848,11 @@ function displayActiveLatihan() {
                         body: JSON.stringify(payload)
                     });
                     
-                    if (!response.ok) throw new Error(`Ralat API ElevenLabs`);
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        const detailMsg = errData.detail ? (errData.detail.message || JSON.stringify(errData.detail)) : response.status;
+                        throw new Error(`[Detail]: ${detailMsg}`);
+                    }
 
                     if (isSync) {
                         const result = await response.json();
