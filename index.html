@@ -1353,7 +1353,7 @@
 let systemSettings = {
     apiKey: "", // DIKOSONGKAN UNTUK KESELAMATAN GITHUB (Sistem akan guna kod pecahan di atas)
     audioApi: "846549736afba9a0f621a2f62d387e8f0d7600a48902bfff1b7d5dff73024697",
-    voiceId: "21m00Tcm4TlvDq8ikWAM",
+    voiceId: "vRaj2Gd0mefB1EU96ua2", // KOD BAHARU: ID Suara Cikgu Diselaraskan
     gasUrl: "https://script.google.com/macros/s/AKfycbze45PzebRXLmtAghrZfbwG5zBd-46glTLUhjq9-0PiTSUlBuCndm2Ikb7qb-7nP2zCPg/exec"
 };
 
@@ -5782,8 +5782,14 @@ function displayActiveLatihan() {
                     }
                 }
                 promptText = promptText.trim();
-            } else {
+           } else {
                 promptText = inputData; // Sokongan untuk mod klik butang tunggal
+            }
+
+            // KOD PENYELAMAT MUTLAK: Halang ralat 400 Bad Request jika teks kosong dihantar
+            if (!promptText || promptText.trim() === "") {
+                console.warn("Teks kosong! Panggilan ElevenLabs dibatalkan bagi mengelakkan ralat 400.");
+                return;
             }
 
             if (!elevenLabsApiKey) {
@@ -5999,14 +6005,22 @@ function displayActiveLatihan() {
 
             if (isPremium) {
                 // Untuk ElevenLabs, guna Kamus Standard
-                if (islamicPhrasesPremium[cleanRumi]) {
+                if (cleanRumi && islamicPhrasesPremium[cleanRumi]) {
                     wordToSpeak = islamicPhrasesPremium[cleanRumi];
                 } else if (arabicMakhrajMap[cleanJawi]) {
                     wordToSpeak = arabicMakhrajMap[cleanJawi];
                 } else if (malayJawiPhonetics[cleanJawi]) {
                     wordToSpeak = malayJawiPhonetics[cleanJawi];
                 }
-                executePremiumTTS(wordToSpeak, speed, false);
+                
+                // PENYELESAIAN RALAT 400: Jika perkataan Jawi ini tiada Rumi, paksa ia baca tulisan Jawi
+                if (!wordToSpeak || wordToSpeak.trim() === "") {
+                    wordToSpeak = cleanJawi;
+                }
+                
+                if (wordToSpeak && wordToSpeak.trim() !== "") {
+                    executePremiumTTS(wordToSpeak, speed, false);
+                }
                 setTimeout(() => buttonEl.classList.remove('audio-highlight-active'), 1000);
             } else {
                 const topics = JSON.parse(AppStorage.getItem('e_smart_topics')) || [];
@@ -6016,11 +6030,18 @@ function displayActiveLatihan() {
                 }
                 
                 // Untuk Azure, guna Kamus Fonetik yang telah diselaraskan
-                if (islamicPhrasesAzure[cleanRumi]) {
+                if (cleanRumi && islamicPhrasesAzure[cleanRumi]) {
                     wordToSpeak = islamicPhrasesAzure[cleanRumi];
                 }
                 
-                executeCloudTTS([wordToSpeak], speed, false);
+                // Sama seperti di atas, jadikan Jawi sebagai sandaran wajib
+                if (!wordToSpeak || wordToSpeak.trim() === "") {
+                    wordToSpeak = cleanJawi;
+                }
+
+                if (wordToSpeak && wordToSpeak.trim() !== "") {
+                    executeCloudTTS([wordToSpeak], speed, false);
+                }
                 setTimeout(() => buttonEl.classList.remove('audio-highlight-active'), 1000);
             }
         }
