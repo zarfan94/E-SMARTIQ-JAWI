@@ -5675,10 +5675,8 @@ function displayActiveLatihan() {
 
         async function executePremiumTTS(inputData, speed, isSync = false) {
             const settings = JSON.parse(AppStorage.getItem('e_smart_settings')) || {};
-            
-            // PAKSA GUNA KUNCI DALAM KOD: Abaikan kunci memori lama yang salah
-            const elevenLabsApiKey = systemSettings.audioApi || settings.audioApi;
-            const voiceId = systemSettings.voiceId || settings.voiceId || "Zephyr";
+            const elevenLabsApiKey = settings.audioApi;
+            const voiceId = settings.voiceId || "Zephyr";
 
             // JAMBATAN PEMETAAN KELIPAN: Menyimpan indeks tepat butang di skrin secara mutlak
             let promptText = "";
@@ -5798,10 +5796,10 @@ function displayActiveLatihan() {
                 ? `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`
                 : `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
 
-            // KOD DIBETULKAN: Guna model turbo v2.5 dan buang voice_settings untuk elak ralat 400
             const payload = {
                 text: promptText,
-                model_id: "eleven_turbo_v2_5"
+                model_id: "eleven_multilingual_v2",
+                voice_settings: { stability: 0.95, similarity_boost: 0.85 }
             };
 
             try {
@@ -5848,11 +5846,7 @@ function displayActiveLatihan() {
                         body: JSON.stringify(payload)
                     });
                     
-                    if (!response.ok) {
-                        const errData = await response.json().catch(() => ({}));
-                        const detailMsg = errData.detail ? (errData.detail.message || JSON.stringify(errData.detail)) : response.status;
-                        throw new Error(`[Detail]: ${detailMsg}`);
-                    }
+                    if (!response.ok) throw new Error(`Ralat API ElevenLabs`);
 
                     if (isSync) {
                         const result = await response.json();
